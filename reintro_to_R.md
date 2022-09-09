@@ -89,10 +89,31 @@ the third argument is evaluated if the statement is false. Suppose we want to pi
 between 0 and 100 and then choose the color red if the number is below 30 or blue otherwise:
 
 ```r
-number <- runif(1, 0, 100)
+number <- runif(50, 0, 100)
 color <- ifelse(number<30, "red", "blue")
+print(color)
+table(color)
 ```
 
 # Reading in Data 
-(titanic)
 
+I've added data on some of the passengers on the titanic to an Advanced Stats Github page.  You can find it [here](https://github.com/jfcross4/advanced_stats/blob/master/titanic_train.csv)
+
+This data is in .csv (comma separated values) form and you can read it into R as follows:
+
+```r
+titanic <- read.csv("https://raw.githubusercontent.com/jfcross4/advanced_stats/master/titanic_train.csv")
+```
+
+and then take as look at it as follows:
+
+```r
+View(titanic)
+```
+
+Here's a brief description of the variables
+
+
+![](titanicdesc.png)
+
+We'll be building models to explain and predict (sort of) who lived and who died.  How should we begin?
