@@ -135,9 +135,13 @@ plot(margin)
 **Question 4:**
 
 a. What is the expected value of St. Ann's' margin of victory?
+
 b. What is the standard deviation in St. Ann's' margin of victory?
+
 c. What is the chance that Saint Ann's will win (in regulation)?
+
 d. What is the chance that the game will go to overtime?
+
 e. Our model of reality (like all models) is imperfect in a number of ways.  Do you think a Saint Ann's/Packer basketball is more or less likely to go to overtime than our model predicts?  Why?
 
 **Question 5:**
