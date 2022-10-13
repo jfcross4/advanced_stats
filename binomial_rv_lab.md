@@ -97,7 +97,7 @@ hist(sibsp_surival_rate)
 hist(difference_in_survival_rate)
 ```
 
-How often does the SibSp group our survived the "loner" group by the 13.1% we saw in the data?
+How often does the SibSp group out survive the "loner" group by the 13.1% we saw in the data (or more)?
 
 ```r
 mean(difference_in_survival_rate>0.131)
