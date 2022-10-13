@@ -109,7 +109,7 @@ Not often!  (You can run more simulations if you want a more precise number)  Th
 mean(abs(difference_in_survival_rate)>0.131)
 ```
 
-**Task 2:** Analyze whether we can be confident that children with a sibling one board had a better chance of survival.  You can modify code used above.  Explain your findings.
+**Task 2:** Analyze whether we can be confident that children with a sibling on board had a better chance of survival.  You can modify code used above.  Explain your findings.
 
 
 
