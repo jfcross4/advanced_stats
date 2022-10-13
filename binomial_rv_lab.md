@@ -92,7 +92,7 @@ difference_in_survival_rate = sibsp_survival_rate - loner_survival_rate
 
 hist(loner_survival_rate)
 
-hist(sibsp_surival_rate)
+hist(sibsp_survival_rate)
 
 hist(difference_in_survival_rate)
 ```
