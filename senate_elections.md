@@ -116,7 +116,7 @@ senate_polls %>%
 senate_polls %>% 
   filter(state=="Pennsylvania", 
          start_date >= "2022-08-01", 
-         answer=="John Fetterman") %>%
+         candidate_name=="John Fetterman") %>%
   select("start_date", 
          "pollster", 
          "pct") %>% 
@@ -125,7 +125,7 @@ senate_polls %>%
 senate_polls %>% 
     filter(state=="Georgia", 
            start_date >= "2022-08-01",
-           answer=="Herschel Junior Walker") %>%
+           candidate_name=="Herschel Junior Walker") %>%
   select("start_date", 
          "pollster", 
          "pct") %>% 
