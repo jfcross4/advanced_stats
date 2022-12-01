@@ -66,7 +66,9 @@ marvel %>%
 Suppose that I might later want to group results by decade.  I would first need to create a decade column.  I'll do this by rounding the year column to the nearest 10.
 
 ```r
-dc = dc %>% mutate(decade = round(YEAR-5, -1))
+dc = dc %>% 
+mutate(decade = round(as.numeric(as.character(YEAR))-5, -1))
+
 marvel = marvel %>% mutate(decade = round(Year-5, -1))
 ```
 
