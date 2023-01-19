@@ -5,7 +5,7 @@ Today, we're going to draw best fit lines to build a model to predict the winner
 
 # The Data
 
-A political science named Douglas Hibbs created the "bread and peace" model for forecasting elections based initially on only economic conditions (and later with a correction for wartime).  
+A political scientist named Douglas Hibbs created the "bread and peace" model for forecasting elections based on only economic conditions (and later added a correction for wartime).  
 
 Let's read in some data on presidential elections and the economy and take a look:
 
@@ -17,7 +17,7 @@ View(hibbs)
 
 * "growth" is the annualized average personal income growth in portion of the president's term prior to the election.  
 
-* "vote" is the portion of the two-party vote share won by the incumbent party (the party that was in office at the time of the election).  "two-party vote share" mean the portion of all votes that went to either a Republican or Democratic candidate.  So, if in an election the Democratic candidate won 50% of the vote, the Republican candidate won 45% of the vote and some combination of third-party candidates won 5% of the vote, then the Democratic candidate won 50/95 = 52.6% of the two party vote share and the Republican candidate won 45/95 = 47.4%.
+* "vote" is the portion of the two-party vote share won by the incumbent party (the party that was in office at the time of the election).  "two-party vote share" means the candidate's portion of all of the votes that went to either a Republican or Democratic candidate.  For example, if in an election the Democratic candidate won 50% of the vote, the Republican candidate won 45% of the vote and some combination of third-party candidates won 5% of the vote, the Democratic candidate won 50/95 = 52.6% of the two party vote share and the Republican candidate won 45/95 = 47.4%.
 
 Let's start by graphing the data:
 
@@ -28,7 +28,7 @@ hibbs %>% ggplot(aes(growth, vote))+
   geom_point()
 ```
 
-We could use labels instead of points if we want:
+We could use labels instead of points:
 
 ```r
 hibbs %>% ggplot(aes(growth, vote))+
@@ -40,7 +40,7 @@ hibbs %>% ggplot(aes(growth, vote))+
 
 # Linear Models
 
-A simple one variable model fit a line, like good old $y = mx + b$ the model only in Statistics class we often call it $y = \beta_1 \cdot x + \beta_0$
+A simple one variable model fits a line, like good old $y = mx + b$ the model only in Statistics class we often call it $y = \beta_1 \cdot x + \beta_0$, to the data.
 
 The best-fit line passes through the point $(\mu_x, \mu_y)$ and has a slope equal to $r \cdot \frac{\sigma_y}{\sigma_x}$ where $\mu_x$ and $\mu_y$ are the means of the x and y variables, $r$ is the correlation between the x and y variables, and $\sigma_x$ and $\sigma_y$ are the standard deviations of the x and y variables.
 
@@ -56,7 +56,7 @@ In other words, our best-fit line has the equation:
 
 $$vote = 3.06 \cdot growth + 46.2$$
 
-The best-fit line is also a prediction line.  In this case it is an equation that allows us to predict vote shares for the incumbent party candidate based on income growth in the previous year.  
+The best-fit line is also a *prediction* line.  In this case it is an equation that allows us to predict vote shares for the incumbent party candidate based on income growth in previous years.  
 
 In fact, the best-fit line is the line that minimizes the root mean squared error of the predicted vote shared compared to the actual vote shares.
 
@@ -80,11 +80,11 @@ hibbs %>% ggplot(aes(growth, vote))+
 
 # Is this for real?
 
-You might be asking yourself whether this relationship between income growth and presidential vote share could be a fluke?  Might we see a relationship this large (or larger) by chance?
+You might be asking yourself whether this relationship between income growth and presidential vote share could be a fluke.  Might we see a relationship this large (or larger) by chance?
 
 Let's investigate this using the *infer* package we've practiced using in our DataCamp classes.  You'll need to install the infer package first.
 
-First, let's build this simple model using the infer package.  This should yield the same result as our calculation above:
+First, let's build this simple model using the infer package.  This should yield the same result as our calculations above:
 
 ```r
 library(infer)
@@ -116,7 +116,7 @@ visualize(null_fits) +
 **Question 6:**
 Do the observed slope and intercept stand out relative to the slopes and intercepts of the shuffled data?  What does this mean?
 
-We can also use our permutations to get p-values for the observed slopes and intercepts.
+Note, we can also use our permutations to get p-values for the observed slopes and intercepts.
 
 ```r
 get_p_value(null_fits, observed_fit, "two-sided")
@@ -124,7 +124,7 @@ get_p_value(null_fits, observed_fit, "two-sided")
 
 # Bootstrap Samples for Uncertainty
 
-We can use bootstrapping to estimate the uncertainty in our slope and intercept.  We'll created 1000 bootstrapped samples of the data (while keeping the pairings between vote share and growth intact) and for each bootstrap sample create a best-fit line.
+We can use bootstrapping to estimate the uncertainty in the slope and intercept of our best-fit line.  We'll created 1000 bootstrap samples of the data (while keeping the pairings between vote share and growth intact) and for each bootstrap sample create a best-fit line.
 
 ```r
 bootstraps <- hibbs %>%
@@ -133,7 +133,7 @@ bootstraps <- hibbs %>%
   fit()
 ```
 
-and find 95% confidence intervals for the slopes and intercepts we found:
+and find 95% confidence intervals for the slope and intercept:
 
 ```r
 get_confidence_interval(
@@ -143,7 +143,7 @@ get_confidence_interval(
 )
 ```
 
-And visualize this the slopes and intercepts of our bootstrap samples.
+And visualize the slopes and intercepts of our bootstrap samples.
 
 ```r
 visualize(bootstraps) + 
@@ -172,7 +172,7 @@ summary(m)
 
 It's worth taking a look at this summary and trying to make sense of some of these numbers.  First, look at the "Estimate" column.  This column shows the estimated y-intercept and slope of the best fit line.  These numbers should match the ones we calculated above.
 
-Now let's look at the "Std. Error" column.  Instead of using bootstrap samples, R uses the following formula to find the standard error in the slope of the best fit line:
+Now, let's look at the "Std. Error" column.  Instead of using bootstrap samples, R uses the following formula to find the standard error in the slope of the best fit line:
 
 $$SE = \sqrt{\frac{1}{n-2} \cdot \frac{\Sigma{(y_i - \hat{y_i})^2}}{\Sigma{(x_i - \bar{x})^2}}}$$
 
@@ -189,7 +189,7 @@ t
 
 The calculation above returns the t value that you see in the summary for growth.
 
-You can find the p-value shown in the summary by looking up that t-value in a t table with $n-2 = 14$ degrees of freedom.  We'll multiple this by 2 to get a two-tailed p-value:
+You can find the p-value shown in the summary by looking up that t-value in a t table with $n-2 = 14$ degrees of freedom.  We'll multiply this by 2 to get a two-tailed p-value:
 
 ```r
 2*(1-pt(t, df=14))
@@ -207,5 +207,5 @@ The t-value and p-value for the **y-intercept** are fairly meaningless in this c
 # What about the "Bread and Peace" model?
 
 **Question 9:**
-After looking at all this, what do you make of Hibbs's model to predict presidential vote shares using income growth?  Are you convinced that this relationship is meaningful?
+After looking at all of this, what do you make of Hibbs's model to predict presidential vote shares using income growth?  Are you convinced that this relationship is meaningful?
 
