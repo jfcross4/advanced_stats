@@ -1,7 +1,7 @@
 Best Fit Lines to Predict Election Winners
 ----------------------------------
 
-Today, we're going to draw best fit lines to build a model to predict the winners of presidential elections.  In the process, we'll hopefully gain and understanding of linear models and the uncertainty of linear models.
+Today, we're going to draw best fit lines to build a model to predict the winners of presidential elections.  In the process, we'll hopefully gain an understanding of linear models and the uncertainty of linear models.
 
 # The Data
 
