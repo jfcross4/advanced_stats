@@ -12,6 +12,8 @@ Notable, while Hibbs' data is set up to predict the *imcumbent party's* vote sha
 You should start by taking a look at the two data sets:
 
 ```r
+library(tidyverse)
+
 file = "https://raw.githubusercontent.com/avehtari/ROS-Examples/master/ElectionsEconomy/data/hibbs.dat"
 hibbs <- read.table(file, header=TRUE)
 
