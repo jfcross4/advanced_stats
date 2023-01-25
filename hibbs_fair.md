@@ -125,7 +125,7 @@ m_fair = lm(incumbent_vote ~ G +
                   WAR + 
                   P + 
                   Z +
-              incumbent_running + 
+              incumbent_running_again + 
               length_party_control, 
               data=fair)
 
