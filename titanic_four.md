@@ -152,7 +152,7 @@ titanic_test$Survived = round(predict(my_linear_model,
 You can use this predictions to make a .csv file which you can submit Kaggle:
 
 ```r
-my_submission = titanic_test %>% 
+my_linear_submission = titanic_test %>% 
   select(PassengerId, Survived)
   
 write.csv(my_linear_submission, 
