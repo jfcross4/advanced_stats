@@ -7,7 +7,7 @@ With parts taken from [Regression and Other Stories](https://users.aalto.fi/~ave
 
 # Assignment
 
-The assignment operator "<-" is the same as "="
+The assignment operator "<-" is the same as "=".  Your first assignment is to use the assignment operator.
 
 ```r
 x <- 3
@@ -18,11 +18,23 @@ print(y)
 
 ```
 
-This is different from "==" which compares values and returns TRUE if they are equal and false if they are not
+"=" is different from "==" which compares values and returns TRUE if they are equal and false if they are not.
 
 ```r
 x == 4
 x == 3
+```
+
+Try to predict the result of the following code before you run it:
+
+```r
+
+z = 4 == 8/2
+print(z)
+
+q = 4 == 6/2
+print(q)
+
 ```
 
 You can also make comparisons with ">", "<", ">=" and "<="
@@ -81,6 +93,38 @@ p <- c(0.5, 0.3, 0.2)
 sample(color, 1, prob=p)
 ```
 
+You can also randomly sample values from other distribution! For example, the number of heads in 100 coin tosses follows a binomial distribution with 100 opportunities each with 1/2 probability of success.  I can simulate the number of heads in 100 coin tosses by doing:
+
+```r
+rbinom(n=1, size=100, prob=1/2)
+```
+
+(If you run the line above multiple times, you will get different results.)
+
+If you want 1000 simulations of 100 coin tosses, you can do:
+
+```r
+rbinom(n=1000, size=100, prob=1/2)
+```
+
+If I want to determine for each result whether there were 60 or more heads, I could do:
+
+```r
+rbinom(n=1000, size=100, prob=1/2) >= 60
+```
+
+And if I want to count up how many times there were 60 or more heads, I could do the following (since TRUE values count as 1's):
+
+```r
+sum(rbinom(n=1000, size=100, prob=1/2) >= 60)
+```
+
+If I simply want the true probability of a sequences of 100 coin flips having 60 or more heads, I could use dbinom instead of rbinom:
+
+```r
+sum(dbinom(60:100, size=100, 1/2))
+```
+
 # ifelse
 
 Comparisons can be used in combination with the ifelse function. The first argument takes a
@@ -116,4 +160,8 @@ Here's a brief description of the variables
 
 ![](titanicdesc.png)
 
-We'll be building models to explain and predict (sort of) who lived and who died.  How should we begin?
+We'll be building models to explain and predict* who lived and who died.  How should we begin?  Which variables do you think will be the best predictors or who lived and who died?
+
+*It's true, we already know!
+
+
