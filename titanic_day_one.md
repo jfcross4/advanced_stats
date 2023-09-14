@@ -23,7 +23,7 @@ Here's an explanation of the data:
 Let's load one of our favorite packages...
 
 ```r
-library(dplyr)
+library(tidverse)
 ```
 ... and add a couple of functions for evaluating predictions which we used when analyzing box office gross predictions.
 
@@ -35,22 +35,25 @@ RMSE <- function(x, y){sqrt(mean((x-y)^2))}
 To test our metrics, let's start with a dismal prediction.  I'll predict that everyone on the Titanic dies.  To make this prediction, I'll use the **mutate** function.  Notice that I'm starting this code with "titanic = ..." in order to overwrite the titanic data frame with a new one that includes our predictions.
 
 ```r
-titanic = titanic %>% mutate(pred=0)
+titanic = titanic %>% 
+  mutate(pred = 0)
 ```
 
 We can see use the RMSE and MAE functions within the summarize function to evaluate these dismal predictions.
 
 ```r
-titanic %>% summarize(mae = MAE(pred, Survived),
-                      rmse = RMSE(pred, Survived))
+titanic %>% 
+  summarize(mae = MAE(pred, Survived),
+            rmse = RMSE(pred, Survived))
 ```
 
 Is it possible to make better predictions?  (Yes.)  It might help to look at a summary of the data.
 
 ```r
-titanic %>% summarize(n=n(),
-                      sum(Survived),
-                      mean(Survived))
+titanic %>% 
+  summarize(n=n(),
+            sum(Survived),
+            mean(Survived))
 ```
 
 In this sample of data (which, by the way, doesn't include everyone who was on the Titanic) there are 891 passengers of whom 342 or 38.4% survived.  
@@ -77,7 +80,9 @@ In this sample, 74.2% of women survived and 18.9% of men.  We could use the **if
 
 ```r
 titanic %>% 
-    mutate(pred = ifelse(Sex=="female", 0.742, 0.189)) %>%
+    mutate(pred = ifelse(Sex=="female", 
+                          0.742, 
+                          0.189)) %>%
     summarize(mae = MAE(pred, Survived),
               rmse = RMSE(pred, Survived))
 ```
@@ -107,9 +112,11 @@ We can also use a combination of variables to help improve our predictions.  Wer
 ```r
 titanic = titanic %>% 
   mutate(woman_or_child = 
-           ifelse((Age >= 18 | is.na(Age)) & Sex =="male",
-                       0,1))
-``
+           ifelse((Age >= 18 | is.na(Age)) & 
+                        Sex =="male",
+                  0,
+                  1))
+```
 
 Now, we can see how the survival rate depends on being in this group:
 
@@ -139,7 +146,7 @@ Devise a system for making "Survived" predicitons with the goal of minimizing RM
 
 # Challenge 2: 
 
-Devise the system for making the "Survived" predicitons that minimizes MAE (with the same restriction on which variables you use).
+Devise the system for making the "Survived" predictions that minimizes MAE (with the same restriction on which variables you use).
 
 # Question: 
 
