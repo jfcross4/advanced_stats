@@ -1,6 +1,8 @@
 04 Random Variables Lab
 -------------------------------------
 
+Sign on to RStudio Cloud.  You can make a new project or work in one you've already created.
+
 # Rolling the Dice
 
 Let's making a random variable for rolling one die:
@@ -8,12 +10,16 @@ Let's making a random variable for rolling one die:
 ```r
 values = 1:6
 probs = rep(1/6, 6)
+```
 
+Take a look at the values and associated probabilities vectors you just made:
+
+```r
 values
 probs
 ```
 
-We can get the expected value of this random variable:
+We can get the expected value of this random variable using our favorite formula:
 
 $$E[X] = \Sigma x_i \cdot P(X=x_i)$$
 
@@ -21,17 +27,34 @@ $$E[X] = \Sigma x_i \cdot P(X=x_i)$$
 sum(values*probs)
 ```
 
-and the variance of this random variables:
+and the variance of this random variable using another favorite:
 
 $$Var[X] = \Sigma (x_i - \mu_x)^2 \cdot P(X=x_i)$$
 
+First, we'll save the expected value to a variable we'll call "EX":
+
 ```r
 EX = sum(values*probs)
+```
+and then calculate the variance
 
+```r
 sum(probs*(values-EX)^2)
 ```
 
-We can do this even more easily using the discreteRV package for discrete random variables.
+If you're thinking that we could have used the formula:
+
+$$Var[X] = E[X^2] - (\mu_x)^2$$
+
+that's true too!
+
+```r
+sum((values^2)*probs) - EX^2
+```
+
+# The Discrete RV package
+
+We can do all this even more easily using the discreteRV package for discrete random variables.
 
 First, let's load the package (you may need to install it first) and create a die roll random variable.
 
@@ -43,7 +66,7 @@ X = RV(outcomes=1:6, probs=rep(1/6, 6))
 X
 ```
 
-Now, we can find the expected value, variance and standard deviation using functions in the discreteRV package.
+Now, we can find the expected value, variance and standard deviation using functions in the discreteRV package. (Please ignore the warning messages.)
 
 ```r
 E(X)
@@ -72,7 +95,7 @@ E(two_rolls)
 V(two_rolls)
 ```
 
-**Question 1:** How do the expected value and standard deviation of the sum of 100 rolls compare to the expected value and standard deviation of one roll?
+**Question 1:** How do the expected value and standard deviation of the sum of 2 rolls compare to the expected value and standard deviation of one roll?  
 
 # Plotting Discrete Random Variables
 
@@ -147,3 +170,7 @@ e. Our model of reality (like all models) is imperfect in a number of ways.  Do 
 **Question 5:**
 
 In NBA games, teams typically have about 100 possessions a piece and they score, on average, about 1.1 points per possession.  Using random variables, try to estimate the chance that an underdog will win a game in which the favorite is favored (expected to win) by 10 points.  Please describe how you made your estimate. 
+
+**Question 6:**
+
+Try to estimate the chance that an NBA game between two evenly matched teams will go to overtime using random variables.  Then look up the % of actual NBA games go to overtime.  Was our estimate close?  If not, how do you think that our (simple) model of reality is failing?
