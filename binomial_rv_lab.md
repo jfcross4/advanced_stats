@@ -1,19 +1,19 @@
 05 Binomial Random Variable Lab
 -------------------------------------
 
-# Soccer Player Birthdays
+# A Familiar Example: Soccer Player Birthdays
 
-Researchers recorder the birth months of 2,768 elite youth soccer players (on youth teams in the Spanish Professional Football League) from 2008-2009.  The found that 1,024 of them were born in the first 3 months of the year.  
+As you know, researchers recorder the birth months of 2,768 elite youth soccer players (on youth teams in the Spanish Professional Football League) from 2008-2009.  The found that 1,024 of them (about 37%) were born in the first 3 months of the year.  
 
 <a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3761747/" target="_blank">Journal Article Here</a>
 
-If players were equally likely to be born in each month, we'd expect a quarter of players (or 692 players) to be born in the first three months of the years.  1,024 is clearly larger than 692!  Our question is whether it's so much greater that *something* must be going on here.
+If players were equally likely to be born in each month, we'd expect a only a quarter of players (or 692 players) to be born in the first three months of the years.  1,024 is clearly larger than 692!  Our question is whether it's so much greater that *something* must be going on here.
 
-Let's try to answer this question using a binomial random variables!
+Let's try to quantify how strange this outcome is using a binomial random variables!
 
 In the language of binomial random variables we had 1024 successes in 2,768 independent trials (assuming none of the players were twins).
 
-We can use dbinom to tell us the chance of exactly 1024 successes in 2768 trials with a 0.25 chance of success.
+We can use **dbinom** to tell us the chance of exactly 1024 successes in 2768 trials with a 0.25 chance of success.
 
 ```r
 dbinom(1024, 2768, prob=0.25)
@@ -33,13 +33,23 @@ That's small, but not nearly so small!  In fact, it's many (many many) times lar
 dbinom(692, 2768, prob=0.25)/dbinom(1024, 2768, prob=0.25)
 ```
 
+The number you just calculated is a ratio of probabilities.  The number of soccer players who were actually born in the first three months of the year is **many many** times less likely than 692 players being born in those months if each player has a 1 in 4 chance of being born in those months. 
+
+We could also look at how many times more likely 1024 births in the first three months would be if we assume that each player had a 37% chance of being born in these months (rather than 25%):
+
+```r
+dbinom(1024, 2768, prob=0.37)/dbinom(1024, 2768, prob=0.25)
+```
+
+Why 37%??  Certainly that's not what we would have expected before hand!  However, we could say that if some other theory of soccer player births predicted 37%, that theory would be *much* better supported by this data than our all-months-are-equal theory that predicted 25%
+
 Another way to think about this is to determine how likely it is we'd have 1024 *or more* births in the first 4 months if player's only had a 25% chance of being born in those months.  To do this, we'll find the chance of every number of successes between 1024 and 2768 and add them all up:
 
 ```r
 sum(dbinom(1024:2768, 2768, prob=0.25))
 ```
 
-This (also really small) number is called a p-value.  The (at times dubious) logic sometimes used is that if this number of successes (or more) is very unlikely given a p of 0.25 then p is really unlikely to be 0.25 (or something very close to that).
+This (also really small) number is called a p-value.  The (at times dubious) logic sometimes used is that if this number of birthdays in the first three months (or more) is very unlikely given a theory that predicts 25% then this theory is really unlikely to be correct given this number of birthdays.
 
 # Extrasensory Perception (ESP)
 
