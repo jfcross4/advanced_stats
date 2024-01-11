@@ -12,7 +12,7 @@ In an experiment, two different species of fruit trees were crossbred. The resul
 |I: Red meat with orange skin |65|
 |II: Red meat with yellow skin |37|
 |III: Yellow meat with orange skin |24|
-|III: Yellow meat with yellow skin |24|
+|IV: Yellow meat with yellow skin |24|
 
 A botanist expected that the ratio of 5:2:2:1 for the color types I: II: III: IV, respectively, would result from this crossbreeding experiment. Are the observed results inconsistent with the expected ratio at the 1 percent level of significance?
 
