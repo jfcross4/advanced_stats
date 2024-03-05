@@ -29,7 +29,7 @@ control_sleep =
 treatment_sleep =
   c(5.9, 6.7, 8.0, 6.7, 6.8, 7.9, 7.9, 5.8, 5.7,
     7.2, 8.4, 7.2, 7.8, 7.5, 6.9, 9.1, 7.8, 5.0,
-    7.5 6.3)
+    7.5, 6.3)
 ``` 
 
 Is there evidence, based on this sample, that this treatment increases sleep hours?
