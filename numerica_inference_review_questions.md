@@ -37,7 +37,7 @@ Is there evidence, based on this sample, that this treatment increases sleep hou
 3. A company has developed two new training programs aimed at improving employee productivity. To determine which program is more effective, they randomly assign 40 employees to two groups: Group 1 undergoes Training Program A, and Group 2 undergoes Training Program B. At the end of the training programs, the productivity increase (measured as the percentage increase in tasks completed per day) for each employee is recorded. The company aims to determine if there is a significant difference in the average productivity increase between employees trained with Program A and those trained with Program B.
 
 ```r
-pt =
+productivity_increase_A =
   c(8.3, 18.1, 19.0, 8.1, 11.4, 13.4, 18.5,
     16.3, 20.0, 17.9, 10.4, 21.6, 19.9, 23.3,
     7.8, 24.7, 23.7, 16.9, 26.4, 22.7)
