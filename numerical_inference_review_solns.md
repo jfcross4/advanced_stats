@@ -89,12 +89,12 @@ t_score
 # p-value.. 
 # the number of degrees of freedom must be
 # between 89 and 193
-1- pt(t_score, df=89)
-1- pt(t_score, df=193)
+2*(1- pt(t_score, df=89))
+2*(1- pt(t_score, df=193))
 ```
 
 * df between 89 and 193
 * t = 1.55
-* p-value = 0.62
+* p-value = 0.125
 
 We cannot reject the null hypothesis that there is no different in exam scores between the groups.
