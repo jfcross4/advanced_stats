@@ -1,6 +1,8 @@
 Numerical Inference Quiz
 ---------------------------------------
 
+**For each question, state the null hypothesis, determine the type of test to perform, test the null hypothesis (you can use an $\alpha = 0.05$), and write down the relevant numbers (degrees of freedom, p-value...).**
+
 **1.** A physical therapist introduces a new physical therapy regimen aimed at improving knee joint flexibility in patients experiencing knee stiffness due to arthritis. To evaluate the effectiveness of this regimen, the therapist measures the maximum angle of flexion (in degrees) that each patient can achieve with their knee joint before starting the regimen and again after completing a 6-week program. The goal is to determine whether there is a statistically significant improvement (meaning a larger angle) in knee joint flexibility after the 6-week regimen.  Please help them analyze their data.
 
 Data:
