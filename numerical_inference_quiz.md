@@ -30,6 +30,7 @@ Data:
 Here are the hypothetical typing speeds for each of the groups:
 
 Model A: 68, 75, 70, 73, 76, 65, 71, 69
+
 Model B: 77, 80, 74, 82, 85, 78, 75, 79
 
 ```r
