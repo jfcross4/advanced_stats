@@ -129,7 +129,7 @@ We can also build more complex **Multiple Regression** models to predict Preside
 
 ## The Data
 
-You can find a description of Ray Fair's model and, most importantly for our purposes, a description of the meaning of his variables [here](https://pollyvote.com/en/components/models/retrospective/fundamentals-only-models/fair-model/).  It's worth taking a few minutes to read this.
+You can find a description of Ray Fair's model and, most importantly for our purposes, a description of the meaning of his variables [here](https://www.pollyvote.com/pollyvote-election-forecasting/models/retrospective-models/fairs-presidential-vote-equation/).  It's worth taking a few minutes to read this.
 
 Notable, while Hibbs' data is set up to predict the *imcumbent party's* vote share, Ray Fair's data is designed to predict the *Democratic party's* vote share.
 
