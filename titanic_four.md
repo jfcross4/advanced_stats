@@ -22,10 +22,9 @@ titanic_train <- read.csv("https://raw.githubusercontent.com/jfcross4/advanced_s
 
 titanic_test <- read.csv("https://raw.githubusercontent.com/jfcross4/advanced_stats/master/titanic_test.csv")
 
-library(dplyr)
+library(tidyverse)
 library(rpart)
 library(rpart.plot)
-library(ggplot2)
 ```
 
 ## Building Models
@@ -51,7 +50,7 @@ my_linear_model =
 
 ```
 
-We can use the example same code we used before to make out-of-sample predictions on our test set.
+We can use the same code we used before to make out-of-sample predictions on our test set.
 
 ```r
 titanic_test$Survived = round(predict(my_linear_model, 
@@ -64,7 +63,7 @@ titanic_test$Survived = round(predict(my_linear_model,
 summary(titanic_test$Survived)
 ```
 
-87 of the predictions are NA!  This is because some passengers ages and missing and in one case a passenger's fare is missing.  Our decision trees had no trouble with this and simple considered NA another possible age.  Our linear models can't handle it!
+87 of the predictions are NA!  This is because some passengers ages are missing and in one case a passenger's fare is missing.  Our decision trees had no trouble with this and simple considered NA another possible age.  Our linear models can't handle it!
 
 We'll try to work around this by making up the ages of passengers who ages are missing.  We can do this building a model to predict ages from the other predictor variables:
 
@@ -114,7 +113,7 @@ ggplot(titanic_train, aes(predicted_fare, Fare))+geom_point()+geom_smooth()
 
 ```
 
-There's room to to better here but since only one passenger's fare is missing, let's keep moving.  We'll make a variable care Fare2 using the same logic as Age2.
+There's room to to better here but since only one passenger's fare is missing, let's keep moving.  We'll make a variable called Fare2 using the same logic as Age2.
 
 ```r
 
@@ -165,3 +164,19 @@ write.csv(my_linear_submission,
 Lastly, go back to the Titanic competition within Kaggle and click on "Submit Predictions". Then you can upload this .csv file.
 
 Did these predictions do better or worse than your decision tree predictions?  What advantages and disadvantages do each type of model have?  Are there ways we could improve these models or use them in combination?  Please write down a few ideas to share with the class when we discuss our models.
+
+# Going Further
+
+It's possible that there are interactions between variables.  For instance, maybe Age has a different relationship with chance of survival for male and female passengers.  Decision trees are good at finding complex interaction but we can also look for interaction using a linear model.
+
+```r
+my_interaction_model =
+  lm(Survived ~ Sex*Age2 + Pclass, 
+  data = titanic_train)
+  
+summary(my_interaction_model)
+```
+
+Look carefully at the summary.  It report one slope for Age and a second slope for Age for male passengers.  How would you interpret this?
+
+Try submitting these predictions to Kaggle.  Does this interaction model make better or worse predictions than your other models?
