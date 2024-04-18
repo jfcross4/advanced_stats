@@ -90,7 +90,7 @@ train %>%
 ```
 
 **Question 1**
-Is there a relationship between amount spend on room service and being transported?
+Is there a relationship between amount spent on room service and being transported?
 
 # Logistic Regression
 
