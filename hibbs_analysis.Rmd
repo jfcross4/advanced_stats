@@ -1,0 +1,174 @@
+---
+title: "Hibbs Analysis"
+author: "Jared Cross"
+date: "2023-01-24"
+output: ioslides_presentation
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning=FALSE, message=FALSE)
+```
+
+```{r, echo=FALSE}
+file = "https://raw.githubusercontent.com/avehtari/ROS-Examples/master/ElectionsEconomy/data/hibbs.dat"
+hibbs <- read.table(file, header=TRUE)
+
+library(tidyverse)
+library(infer)
+```
+
+
+## Variables Recap
+
+* "growth" is the annualized average personal income growth in portion of the president's term prior to the election.  
+
+* "vote" is the portion of the two-party vote share won by the incumbent party (the party that was in office at the time of the election).
+
+## Vote v. Growth
+
+```{r}
+hibbs %>% ggplot(aes(growth, vote))+
+  geom_text(aes(label=inc_party_candidate)) 
+
+```
+
+## Vote v. Growth (with a best fit line)
+
+```{r}
+hibbs %>% ggplot(aes(growth, vote))+
+  geom_text(aes(label=inc_party_candidate)) +
+  geom_smooth(method="lm", se=FALSE)
+```
+
+## The Equation
+
+$$vote = 3.06 \cdot growth + 46.2$$
+
+## Permuations (Null Hypothesis)
+
+```{r, cache=TRUE}
+observed_fit <- hibbs %>%
+  specify(vote ~ growth) %>%
+  fit()
+
+null_fits <- hibbs %>%
+  specify(vote ~ growth) %>%
+  hypothesize(null = "independence") %>%
+  generate(reps = 1000, type = "permute") %>%
+  fit()
+
+visualize(null_fits) + 
+  shade_p_value(observed_fit, direction = "both")
+
+```
+
+## Bootstrapping (Estimation)
+
+```{r, cache=TRUE}
+bootstraps <- hibbs %>%
+  specify(vote ~ growth) %>%
+  generate(reps = 1000, type = "bootstrap") %>%
+  fit()
+
+visualize(bootstraps) + 
+  shade_p_value(observed_fit, direction = "both")
+
+```
+
+## Fitting the Model in R
+
+```{r, echo=TRUE}
+m = lm(vote ~ growth, data=hibbs)
+summary(m)
+```
+
+## Standard Error in the Slope
+
+$$SE = \sqrt{\frac{1}{n-2} \cdot \frac{\Sigma{(y_i - \hat{y_i})^2}}{\Sigma{(x_i - \bar{x})^2}}}$$
+
+
+## Fitting the Model in R (continued)
+
+```{r, echo=FALSE}
+m = lm(vote ~ growth, data=hibbs)
+summary(m)
+```
+
+## Residuals
+
+```{r, echo=TRUE}
+hibbs$predicted_vote = predict(m)
+
+hibbs = hibbs %>%
+  mutate(residual = vote - predicted_vote)
+```
+
+Remember "Observed - Expected" from our Chi Square Tests?
+
+Residual = The part left over
+
+## Regression Math
+
+```{r, echo=TRUE, eval=FALSE}
+hibbs %>%
+  summarize(var(vote),
+            var(predicted_vote),
+            var(residual),
+            cor(vote, growth),
+            cor(vote, predicted_vote),
+            cor(vote, growth)^2,
+            variance_unexplained = 
+              var(residual)/var(vote),
+            variance_explained =
+                1-var(residual)/var(vote))
+
+```
+
+## Regression Math Results
+
+```{r, echo=FALSE}
+hibbs %>%
+  summarize(var(vote),
+            var(predicted_vote),
+            var(residual),
+            cor(vote, growth),
+            cor(vote, predicted_vote),
+            cor(vote, growth)^2,
+            variance_unexplained = 
+              var(residual)/var(vote),
+            variance_explained =
+                1-var(residual)/var(vote))
+
+```
+
+## Fitting the Model in R (a second look)
+
+```{r, echo=FALSE}
+m = lm(vote ~ growth, data=hibbs)
+summary(m)
+```
+
+## Adjusted R-squared?
+
+$${R^2}_{adj} = 1 - \frac{(1-R^2)(n-1)}{n-k-1}$$
+where **n** is number of data points and **k** is the number of variables used in the model
+
+## Adjusted R-squared (playing around 1/2)?
+
+```{r, echo=TRUE}
+adjusted_R_sq = function(Rsq, n, k){
+  1-(1-Rsq)*(n-1)/(n-k-1)
+}
+
+adjusted_R_sq(0.5798, 16, 1)
+
+adjusted_R_sq(0.5798, 16, 5)
+
+adjusted_R_sq(0.5798, 16, 9)
+```
+
+## What else might matter?
+
+Can we build an even better model?
+
+Ray Fair (among others) has worked on building a model with more variables.

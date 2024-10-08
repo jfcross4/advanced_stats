@@ -1,0 +1,190 @@
+---
+title: "Logistic Regression for Kicks"
+author: "Sports Data Science"
+output: html_document
+---
+
+In this lab we'll build a model to predict the chance that a field goal will succeed.  First let's grab the data:
+
+# The Data 
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+library(dplyr);library(rpart); library(rpart.plot); library(ggplot2)
+
+kickers <- read.csv("Kickers.csv")
+```
+
+```{r, eval=FALSE, warning=FALSE, message=FALSE}
+library(dplyr);library(rpart); library(rpart.plot); library(ggplot2)
+
+
+kickers <- read.csv("/home/rstudioshared/shared_files/data/Kickers.csv")
+View(kickers)
+```
+
+Now let's use our good friend dplyr and ggplot2 to get averages by distance and plot the data:
+
+```{r, eval=FALSE}
+kickers %>% group_by(Distance) %>% 
+  summarize(rate = mean(Success), n=length(Success)) %>% 
+  ggplot(aes(Distance, rate, size=n))+geom_point()
+```
+
+# A Linear Model
+
+First, let's try to model the data using linear regression if only to see where it goes wrong.
+
+```{r, eval=FALSE}
+m.linear <- lm(Success ~ Distance, data=kickers)
+m.linear
+```
+
+Q1. How would you interpret the results of this model?  Does this model make sense?
+
+We can represent the predictions our model makes in a graph:
+
+```{r, eval=FALSE}
+distance <- seq(18, 80, 1)
+plot(distance, predict(m.linear, list(Distance=distance)), type="l", ylab="Predicted Success Rate")
+
+```
+
+# Logistic Regression
+
+Now, let's see if we can do better with a logistic regression.
+
+Remember that in logistic regression, we build a model that predicts the **log odd** of success rate and not the success rate itself.
+
+```{r, eval=FALSE}
+m.logistic <- glm(Success ~ Distance, data=kickers, family="binomial")
+coef(m.logistic)
+```
+
+These coefficients are hard to interpret in their current form.  Our equation looks like:
+
+$$log_e\ (odds\ success) = \beta_0 + \beta_1 \cdot distance$$
+where $\beta_0$ and $\beta_1$ are the coefficients returned by our model:
+
+$$log_e\ (odds\ success) = 5.725 - 0.1026 \cdot distance$$
+
+We can *exponentiate* both sides of the equation (meaning raise e to the power of each side) and get the following equations:
+
+$$odds\ success = e^{\beta_0 + \beta_1 \cdot distance}$$
+$$odds\ success = e^{\beta_0} \cdot e^{\beta_1 \cdot distance}$$
+$$odds\ success = e^{\beta_0} \cdot (e^{\beta_1})^{distance}$$
+... in our case:
+
+$$odds\ success = e^{5.725} \cdot (e^{-0.1026})^{distance}$$
+To simplify this, we can raise e to the power of our coefficients:
+
+```{r, eval=FALSE}
+exp(coef(m.logistic))
+```
+
+and thus our equation becomes:
+
+$$odds\ success = 306.3 \cdot 0.90247^{distance}$$
+
+What this model tells us is that the odds of making a field goal at 0 yards distance are 306:1 (meaning that an NFL kicker is 306 times more likely to make it than he is to miss it) but that the odds are multiplied by 0.9 for every yard you move.  At 50 yards, the odds are:
+
+$$306.3 * 0.9025^{50} = 1.81$$
+
+meaning that a kicker is 1.81 times as likely to make the field goal as he is to miss it.  Or, more simply, that he has a 1.81/2.81 = 64.4% chance of making the field goal.
+
+If we're interested at the distance at which a field goal becomes a coin flip (50%), we can solve for the distance that gives us an odds of success of 1 (just as likely to make it as miss it):
+
+
+$$306.3 * 0.9025^{distance} = 1$$
+
+$$0.9025^{distance} = 0.003265$$
+$$distance = log(0.003265)/log(0.9025) = 55.8\ yards$$
+
+We can use the same code we used with our linear model to plot the predictions of this logistic model (just replacing the name of the model):
+
+```{r, eval=FALSE}
+distance <- seq(18, 80, 1)
+plot(distance, predict(m.logistic, list(Distance=distance), type="response"), type="l", ylab="Predicted Success Rate")
+```
+
+How does this compare to the predictions made by the linear model?
+
+## On Grass or Turf?
+
+Use the following code to find the effect of kicking on grass relative to kicking on turf.
+
+```{r, eval=FALSE}
+m.logistic <- glm(Success ~ Distance+Grass, data=kickers, family="binomial")
+m.logistic
+
+exp(coef(m.logistic))
+
+summary(m.logistic)
+```
+
+The following code plots the probability of success on grass (green line) and turf (red line) according to our model.
+
+```{r, eval=FALSE}
+distance <- seq(18, 80, 1)
+plot(distance, predict(m.logistic, list(Distance=distance, Grass=rep(TRUE, 63)), type="response"), type="l", ylab="Predicted Success Rate", col="darkgreen")
+lines(distance, predict(m.logistic, list(Distance=distance, Grass=rep(FALSE, 63)), type="response"), type="l", ylab="Predicted Success Rate", col="red")
+```
+
+## Are Kickers Getting Better?
+
+The following code looks at the effect of the year on our model.
+
+```{r, eval=FALSE}
+m.logistic <- glm(Success ~ Distance+Grass+Year, data=kickers, family="binomial")
+m.logistic
+
+exp(coef(m.logistic))
+
+summary(m.logistic)
+```
+
+and this code plots one line for each year:
+
+```{r, eval=FALSE}
+distance <- seq(18, 80, 1)
+plot(distance, predict(m.logistic, list(Distance=distance, Grass=rep(TRUE, 63), Year=rep(2005,63)), type="response"), type="l", ylab="Predicted Success Rate")
+
+for (year in 2006:2015){
+  lines(distance, predict(m.logistic, list(Distance=distance, Grass=rep(TRUE, 63), Year=rep(year,63)), type="response"), type="l", ylab="Predicted Success Rate")
+}
+```
+
+## And Here's the Kicker
+
+We could use dplyr to get rates of success for each kicker:
+
+```{r, eval=FALSE}
+kickers %>% group_by(Kicker) %>% 
+  summarize(n=length(Success), rate=mean(Success)) %>%
+  top_n(10, rate) %>% arrange(desc(rate))
+
+kickers %>% group_by(Kicker) %>% 
+  summarize(n=length(Success), rate=mean(Success)) %>%
+  top_n(10, desc(rate)) %>% arrange(rate)
+
+```
+
+However, these rates don't account for the distances of the kicks and whether or not they are on grass.  To get kicker effects, we could add kickers to our model:
+
+
+```{r, eval=FALSE}
+m.logistic <- glm(Success ~ Distance+Grass+Year+Kicker, data=kickers, family="binomial")
+m.logistic
+```
+
+The following code determine the top 10 and bottom 10 kickers according to our model.  The coefficients for each kicker tell us the factor by which each kicker multiplies the odds of success.  
+
+```{r, eval=FALSE}
+kicker.effects <- data.frame(kicker = gsub("Kicker", "", names(coef(m.logistic))[-c(1:4)]), effect = exp(coef(m.logistic))[-c(1:4)])
+
+
+kicker.effects %>% top_n(10, effect) %>% arrange(desc(effect))
+
+kicker.effects %>% top_n(10, desc(effect)) %>% arrange(effect)
+```
+
+Is there an important shortcoming of this model?  What might we want to do if we were serious about rating kickers?

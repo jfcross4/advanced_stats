@@ -1,0 +1,179 @@
+---
+title: "Linear and Logistic Regression Quiz"
+author: "Jared Cross"
+date: "`r Sys.Date()`"
+output:
+  pdf_document: default
+  html_document: default
+  word_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Spaceship Titanic
+
+All of the questions below are based on linear and logistic regression models to predict which passengers were transported on the Spaceship Titanic.  
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+library(tidyverse)
+
+train = 
+  read.csv("https://raw.githubusercontent.com/jfcross4/advanced_stats/master/spaceship-titanic/train.csv")
+
+test = 
+  read.csv("https://raw.githubusercontent.com/jfcross4/advanced_stats/master/spaceship-titanic/test.csv")
+  
+test$Transported = NA
+
+cleanship = function(df){
+df %>%
+  mutate_at(c("Transported", "VIP", 
+        "CryoSleep"),
+           as.logical) %>%
+  mutate_at(c("HomePlanet",  
+            "Destination"),
+           as.factor) %>%
+  mutate_at(vars(RoomService:VRDeck),
+      list(log = ~log(.x + 1))) %>%
+  separate(Name, 
+          c("FirstN", "LastN"), 
+          " ", 
+          remove = FALSE, 
+          extra = "drop") %>%
+  separate(PassengerId, 
+          c("Party","PartyNr"), 
+          "_", 
+          remove = FALSE, 
+          extra = "drop") %>%
+  separate(Cabin, 
+          c("deck","num", "side"), 
+          "/", 
+          remove = FALSE, 
+          extra = "drop")
+}
+
+train = cleanship(train)
+
+test = cleanship(test)
+
+
+```
+
+## Spaceship Titanic "Side"
+
+```{r}
+table(train$side)
+```
+
+The spaceship titanic, like many ships has two sides, "Port" and "Starboard".  
+
+As shown in the summary above, in the training set, there are 4206 passengers who were on the port "P" side of the ship and, 4288 passengers on the starboard "S" side.
+
+\newpage
+## Linear Regression
+
+```{r}
+m1 = lm(Transported ~ side,
+        data=train)
+
+summary(m1)
+```
+
+1. The regression above uses the port side of the ship as the default and shows the effect of being on the starboard side ("S").  Please use it to predict the probability of being transported for someone on the starboard side of the ship.
+
+\vspace{55pt}
+
+2. Can you reject the null hypothesis that passengers on the two sides of the ship were equally likely to be transported (use $\alpha = 0.05$?  Why or why not?
+
+\vspace{55pt}
+
+\newpage
+# Age and P(Transported)
+
+```{r}
+
+
+m2 = lm(Transported ~ Age,
+        data=train)
+
+coef(m2)
+```
+
+
+3. Based on the results above, please write an equation describing the relationship between passenger age and the chance of being transported.
+
+\vspace{55pt}
+
+4. Based on your equation, predict the chance of being transported for someone who is 10 years old.
+
+\vspace{55pt}
+
+5. Predict the chance of being transported for someone who is 80 years old.
+
+\vspace{55pt}
+
+## Multiple Regression
+
+```{r}
+m3 = lm(Transported ~ 
+          side + Age,
+        data=train)
+
+coef(m3)
+```
+
+6. Using the multiple regression above, predict the chance of being transported for someone who is 10 years old and was on the starboard side of the ship.
+
+\vspace{55pt}
+
+7. Predict the chance of being transported for someone who was 80 years old and on the port side of the ship.
+
+\vspace{55pt}
+
+# Logistic Regression
+
+Note: VRDeck_log = $log_e(VRDeck + 1)$
+```{r}
+m4 = glm(Transported ~ VRDeck_log,
+        data=train,
+        family="binomial")
+
+coef(m4)
+```
+
+8. Using the coefients above, write an equation to predict the *log odds* of being transported based on VRDeck_log.
+
+\vspace{55pt}
+
+```{r}
+exp(coef(m4))
+```
+
+9. Using the exponentiated coefficients above, write an equation to predict the odds of being transported based on VRDeck_log.
+
+\vspace{55pt}
+
+10. Based on this logistic regression, predict the odds of being transported for someone who spent 1000 at the VR deck (Please note that "VRDeck_log" is $log_e(VRDeck + 1)$).
+
+\vspace{55pt}
+
+11. Based on this logistic regression, predict the probability of being transported for someone who spent 0 at the VR Deck.
+
+\vspace{55pt}
+
+\newpage
+# Bonus
+
+```{r}
+m5 = glm(Transported ~ VRDeck_log + 
+           Age,
+        data=train,
+        family="binomial")
+
+coef(m5)
+exp(coef(m5))
+```
+
+Based on the logistic regression above, and using either the coefficients or the exponentiated coefficients, predict the probability of being transported for someone who is 20 years old and spent 250 at the VR Deck.

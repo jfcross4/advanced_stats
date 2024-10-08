@@ -1,0 +1,97 @@
+---
+title: "Random Variable Cheat Sheet"
+author: "Advanced Statistics"
+output: pdf_document
+---
+
+$E[X] = \mu_X = \sum_{i=1}^{n}p(x_i)\cdot{x_i}$
+
+$E[f(x)] = \sum_{i=1}^{n}p(x_i)\cdot{f(x_i)}$
+
+$Var[X] = E[(X-\mu_X)^2] = E[X^2] - (\mu_X)^2 = \sigma^2_x = \sum_{i=1}^{n}p(x_i)\cdot{(x_i - \mu_X)^2}$
+
+# Continuous Random Variables
+
+$\rho(X) =$ "the probability density of X" (for continuous random variables) 
+
+$F(X) =$ "the cumulative distribution of X"
+
+$F[x] = P(X \leq x)$
+
+# Sum of Random Variables
+
+$E[X+Y] = E[X] + E[Y]$ (expected values add)
+
+when X and Y are independent: $Var[X + Y] = Var[X] + Var[Y]$
+
+more generally: $Var[X + Y] = Var[X] + Var[Y] + 2\cdot Cov[X,Y]$
+
+$Corr[X,Y] = \frac{Cov[X,Y]}{\sigma_x \cdot \sigma_y}$
+
+## Linear Transformations of Random Variables:
+
+If $Y = aX + b$ then $E[Y] = aE[X] + b$ and $Var[Y] = a^2 Var[X]$
+
+# Binomial Random Variables
+X ~ binomial(n, p)
+
+X is the number of succesess in n independent trials each with p probability of success
+
+$P(X = k) = \binom{n}{k} p^k (1-p)^{n-k}$
+
+$E[X] = np$
+
+$Var[X] = np(1-p)$
+
+# Uniform Random Variables
+ X ~ unif(a,b)
+
+X is a randomly selected value from the interval (a,b) where all values have the same probability density.
+
+$\rho[x] = \frac{1}{b-a}$
+
+$E[X] = \frac{a+b}{2}$
+
+$Var[X] = \frac{(b-a)^2}{12}$
+
+# Normal Random Variables
+$X \sim N(\mu, \sigma^2)$, where $\mu$ is the mean and $\sigma$ is the standard deviation
+
+$\rho(x) = \sqrt{\frac{1}{2\pi \sigma^2}} e^{\frac{-(x-\mu)^2}{2 \sigma^2}}$
+
+## Central Limit Theorem
+
+The probability distribution of means or sums of a large number of independent draws from ANY distribution (with a finite expected value) can be approximated by a normal distribution.  Outcomes that are affected by a large number of individually small, mostly independent, factors tend to be roughly normally distributed.
+
+## Z-Scores
+
+The Z-score of an observation is the number of standard deviations it falls above or below the mean. We compute the Z-score for an observation $x$ that follows a distribution with mean $\mu$ and standard deviation $\sigma$ using
+
+$$Z = \frac{x-\mu}{\sigma}$$
+Z ~ N(0,1)
+
+$\rho(z) = \sqrt{\frac{1}{2\pi}} e^{\frac{-z^2}{2}}$
+
+$F(z) =$ ...look on a standard normal table!
+
+# Exponential Random Variables
+
+$X \sim exp(\lambda)$ where $\lambda$ is the rate at which events occur in a process in which events occur continuously and independently.
+
+$\rho(X) = \lambda e^{- \lambda x}$
+
+$F(x) = 1 - e^{- \lambda x}$
+
+$E[X] = \frac{1}{\lambda}$
+
+$Var[X] = \frac{1}{\lambda^2}$
+
+<!-- # Poisson Random Variables -->
+
+<!-- $X \sim Poisson(\lambda)$ where $\lambda$ is the mean number of events that occur in a process in which events occur continuously and independently at a constant average rate. -->
+
+<!-- $P(X = k) = \frac{\lambda^k}{k!} e^{- \lambda}$ -->
+
+<!-- $E[X] = {\lambda}$ -->
+
+<!-- $Var[X] = {\lambda}$ -->

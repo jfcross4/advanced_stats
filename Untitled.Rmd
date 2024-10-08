@@ -1,0 +1,31 @@
+---
+title: "Making Simple 538 Based March Madness Predictions"
+author: "Jared Cross"
+date: "2023-03-14"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Packages
+
+There are two packages you'll need to load:
+
+```{r}
+library(tidyverse)
+library(reshape2)
+```
+
+# 538 Predictions
+
+Nate Silver and the folks at 538 have done the hard work of rating Men's and Women's basketball teams from 2016 to the present.  In this lab, we can take their team ratings, adjust their formula for using team rating to project tournament games and make predictions for this year's Kaggle competition.
+
+```{r}
+M538 = read.csv("https://raw.githubusercontent.com/jfcross4/advanced_stats/master/stage2data/538ratingsMen.csv")
+
+W538 = read.csv("https://raw.githubusercontent.com/jfcross4/advanced_stats/master/stage2data/538ratingsWomen.csv")
+
+
+```

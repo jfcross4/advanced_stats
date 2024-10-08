@@ -1,0 +1,151 @@
+---
+title: "Categorical Data Hypothesis Testing Review Sheet"
+author: "Advanced Statistics"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(knitr)
+```
+
+# 1. One Proportion
+
+You flip 60 heads in 100 coin tosses.  What is the chance that you'd have this many heads or more with a fair coin?
+
+### With the Standard Normal Approximation
+
+```{r}
+sd_heads = sqrt(100*0.5*0.5)
+zscore = (59.5 - 50)/sd_heads
+# using 59.5 instead of 60 is the continuity correction
+1-pnorm(zscore)
+```
+
+### Using The Binomial Formula
+
+```{r}
+sum(dbinom(60:100, 100, 0.5))
+```
+
+### Using R's built-in Proportion Test
+
+```{r}
+prop.test(x=60, 100, p=0.5, alternative = "greater")
+```
+
+# 2. Comparing Two Proportions
+
+In a class experiment, Jonah made 60 out of 100 free throws while Owen made 48 out of 105 free throws.  What is the chance that one of the two students would out-perform the other by this much or more if they were equally good free throw shooters?
+
+### Full Calculation (without a continuity correction)
+
+```{r}
+pooled_success_rate = (60+48)/(100+105)
+
+sd_jonah_rate = sqrt(pooled_success_rate*(1-pooled_success_rate)/100)
+
+sd_owen_rate = sqrt(pooled_success_rate*(1-pooled_success_rate)/105)
+
+sd_diff_rates = sqrt(sd_jonah_rate^2 + sd_owen_rate^2)
+
+diff_in_rates = 60/100 - 48/105
+
+zscore_diff = diff_in_rates/sd_diff_rates
+
+2*(1-pnorm(zscore_diff)) 
+# We used "2*" because this is "two-sided"
+# the alternative hypothesis isn't that 
+# Jonah is better it's that one of the 
+# two students is better than the other.
+```
+
+### With a continuity correction:
+
+```{r}
+diff_in_rates = 59.5/100 - 48.5/105
+zscore_diff = diff_in_rates/sd_diff_rates
+
+2*(1-pnorm(zscore_diff))
+```
+
+### Using R's built in function
+
+```{r}
+prop.test(x = c(60, 48), n=c(100, 105), alternative = "two.sided")
+```
+
+# 3. Chi Square Test for Goodness of Fit
+
+Our example, results from possibly unfair dice:
+```{r, echo=FALSE}
+side <- 1:6
+num_times <- c(80, 103, 93, 105, 96, 123)
+die_results = data.frame(side, num_times)
+kable(die_results)
+```
+
+How likely is it that we'd see results this uneven (or more uneven) from a fair die?
+
+### Full Calculations:
+```{r}
+num_times <- c(80, 103, 93, 105, 96, 123)
+expected <- rep(100, 6)
+differences = num_times-expected
+chi_square = sum((differences^2)/expected)
+1 - pchisq(chi_square, df=5) # to find the p-value
+```
+
+### Easy Way:
+
+```{r}
+num_times <- c(80, 103, 93, 105, 96, 123)
+chisq.test(x = num_times, p=rep(1/6, 6))
+```
+
+# 4. Chi Square Test for Independence
+
+Our example, kids taking multiple science classes by grade:
+
+```{r, echo=FALSE}
+observed = c(57, 26, 35, 45, 61, 21, 38, 41)
+values = matrix(observed, ncol=2, byrow=TRUE)
+classes = data.frame(values, row.names=9:12)
+colnames(classes) = c("One_Science_Class", "Mult_Science_Classes")
+kable(classes)
+
+
+```
+
+What are the chances that the rates of doubling up by grade would be this different or more different if doubling up and grade were independent?
+
+### Full Calculations:
+
+
+
+```{r}
+observed = c(57, 26, 35, 45, 61, 21, 38, 41)
+
+row_tots = c(83, 83, 80, 80, 82, 82, 79, 79)
+
+col_tots = rep(c(191, 133),4)
+grand_total = sum(observed)
+expecteds = row_tots*col_tots/grand_total
+chi_square = sum(((observed-expecteds)^2)/expecteds)
+1 - pchisq(chi_square, df=3) #for the p-value
+```
+
+
+### Easy Way:
+
+```{r}
+observed = c(57, 26, 35, 45, 61, 21, 38, 41)
+
+values = matrix(observed, ncol=2, byrow=TRUE)
+
+chisq.test(values)
+
+```
+

@@ -1,0 +1,177 @@
+---
+title: "Linear and Logistic Regression Questions version 2"
+author: "Jared Cross"
+date: "`r Sys.Date()`"
+output:
+  pdf_document: default
+  html_document: default
+  word_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Spaceship Titanic
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+library(tidyverse)
+
+train = 
+  read.csv("https://raw.githubusercontent.com/jfcross4/advanced_stats/master/spaceship-titanic/train.csv")
+
+test = 
+  read.csv("https://raw.githubusercontent.com/jfcross4/advanced_stats/master/spaceship-titanic/test.csv")
+  
+test$Transported = NA
+
+cleanship = function(df){
+df %>%
+  mutate_at(c("Transported", "VIP", 
+        "CryoSleep"),
+           as.logical) %>%
+  mutate_at(c("HomePlanet",  
+            "Destination"),
+           as.factor) %>%
+  mutate_at(vars(RoomService:VRDeck),
+      list(log = ~log(.x + 1))) %>%
+  separate(Name, 
+          c("FirstN", "LastN"), 
+          " ", 
+          remove = FALSE, 
+          extra = "drop") %>%
+  separate(PassengerId, 
+          c("Party","PartyNr"), 
+          "_", 
+          remove = FALSE, 
+          extra = "drop") %>%
+  separate(Cabin, 
+          c("deck","num", "side"), 
+          "/", 
+          remove = FALSE, 
+          extra = "drop")
+}
+
+train = cleanship(train)
+
+test = cleanship(test)
+
+
+```
+
+## Spaceship Titanic Home Planet
+
+```{r}
+table(train$HomePlanet)
+```
+
+In the training set, there are 201 people whose home planet is not known, 4602 Earthlings, 2131 Europans and 1759 Martians.
+
+## Linear Regression
+
+```{r}
+m1 = lm(Transported ~ HomePlanet,
+        data=train)
+
+summary(m1)
+```
+\newpage
+1. The regression above uses an unknown home planet as a default.  Please use it to predict the probability of being transported for Earthlings, Europans, and Martians. 
+
+\vspace{48pt}
+
+2. Can you reject the null hypothesis that Earthlings are just as likely to be transported as people with an unknown home planet?
+
+\vspace{48pt}
+
+3. Can you reject the null hypothesis that Martians are just as likely to be transported as people with an unknown home planet?
+
+\vspace{48pt}
+
+
+
+# Spa Treatments?
+
+```{r}
+# Note: 
+# Spa_log = log(Spa + 1)
+
+m2 = lm(Transported ~ Spa_log,
+        data=train)
+
+coef(m2)
+```
+
+
+4. Please write an equation describing the relationship between amount spent at the spa and the chance of being transported.  Note that "Spa_log" is $log_e(Spa + 1)$.
+
+\vspace{48pt}
+
+5. Predict the chance of being transported for someone who spent 0 on spa treatments.
+
+\vspace{48pt}
+
+6. Predict the chance of being transported for someone who spent 1000 on spa treatments.
+
+\vspace{48pt}
+
+```{r}
+m3 = lm(Transported ~ 
+          Spa_log + CryoSleep,
+        data=train)
+
+coef(m3)
+```
+
+7. Using the multiple regression above, predict the chance of being transported for someone who spent 0 on spa treatments and who *was* in CryoSleep.
+
+\vspace{48pt}
+
+8. Predict the chance of being transported for someone who spent 1000 on spa treatments and who was *not* in CryoSleep.
+
+\vspace{48pt}
+
+# Logistic Regression
+
+```{r}
+m4 = glm(Transported ~ HomePlanet,
+        data=train,
+        family="binomial")
+
+coef(m4)
+```
+
+9. Write an equation to predict the *log odds* of being transported based on HomePlanet (or if you prefer you can write one equation for each planet).
+
+\vspace{48pt}
+
+```{r}
+exp(coef(m4))
+```
+
+10. Based on this logistic regression, write an equation to predict the odds of being transported based on HomePlanet.
+
+\vspace{48pt}
+
+11. Based on this logistic regression, predict the odds of being transported for an Earthling.
+
+\vspace{48pt}
+
+12. Based on this logistic regression, predict the probability of being transported for a Martian.
+
+\vspace{48pt}
+
+
+# Bonus
+
+```{r}
+m5 = glm(Transported ~ HomePlanet + 
+           Spa_log,
+        data=train,
+        family="binomial")
+
+coef(m5)
+exp(coef(m5))
+```
+
+13. Based on the logistic regression above, predict the probabilty of being transported for an Earthling who spent 500 at the spa.

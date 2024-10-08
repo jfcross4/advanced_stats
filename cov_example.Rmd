@@ -1,0 +1,49 @@
+---
+title: "Covariance Example"
+author: "Advanced Statistics"
+date: "2024-10-04"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Formulas from last time...
+
+when X and Y are independent: $Var[X + Y] = Var[X] + Var[Y]$
+
+more generally: $Var[X + Y] = Var[X] + Var[Y] + 2\cdot Cov[X,Y]$
+
+where:
+
+$Cov[X,Y] = E[X \cdot Y] - E[X]\cdot[Y]$
+
+# From the last homework...
+
+X = “The # of heads on the first flip”
+
+Y = “The # of heads on the second flip”
+
+For a FAIR coin we found:
+
+* $E[X] = \frac{1}{2}$
+* $E[Y] = \frac{1}{2}$
+* $E[X \cdot Y] = \frac{1}{4}$
+
+For a coin that has a half chance of being biased towards heads (2/3rds heads) and a half chance of being bised towards tails (2/3rds tails):
+
+* $E[X] = \frac{1}{2}$
+* $E[Y] = \frac{1}{2}$
+* $E[X \cdot Y] = \frac{5}{18}$
+
+It's also true that for both coins:
+
+$Var[X] = Var[Y] = \frac{1}{4}$
+
+For each coin, please find:
+
+a. $Cov[X,Y]$
+b. $Var[X + Y]$
+
+Why is $Var[X + Y]$ larger for one of the coins?

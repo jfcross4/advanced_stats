@@ -1,0 +1,494 @@
+---
+title: "Logistic Regression"
+author: "Jared Cross"
+date: "2023-01-30"
+output:
+  ioslides_presentation: default
+  beamer_presentation: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message=FALSE, warning=FALSE)
+```
+
+
+## Winning Elections
+
+Let's take another look at the Hibbs data but this time we'll try to predict the chance of a candidate winning the popular vote.
+
+```{r, echo=FALSE}
+file = "https://raw.githubusercontent.com/avehtari/ROS-Examples/master/ElectionsEconomy/data/hibbs.dat"
+hibbs <- read.table(file, header=TRUE)
+
+library(tidyverse)
+```
+
+```{r, echo=TRUE}
+hibbs = 
+hibbs %>% 
+  mutate(won_pop = ifelse(vote>=50, 1, 0))
+
+```
+
+## Winning the Popular Vote
+
+```{r}
+hibbs %>% ggplot(aes(growth, won_pop))+
+  geom_point()
+
+```
+
+## Winning the Popular Vote...
+
+We can add a best fit line...
+
+```{r}
+hibbs %>% ggplot(aes(growth, won_pop))+
+  geom_point()+geom_smooth(method="lm", se=FALSE)
+
+```
+
+## The Equation (1/2)
+
+```{r, echo=TRUE}
+m = lm(won_pop ~ growth, data=hibbs)
+summary(m)
+
+```
+
+## The Equation (2/2)
+
+$$won\_pop = 0.183 + 0.2 \cdot growth$$
+
+$$ 0.183 + 0.2\cdot growth > 1$$
+$$ 0.2 \cdot growth > 0.817$$
+$$ growth > 4.085$$
+
+## What if instead...
+
+We predict the log odds of winning...
+
+$$odds = \frac{probability}{1-probability}$$
+$$ 0 <= odds <= \infty $$
+
+$$ log\ odds = log(\frac{probability}{1-probability}) $$
+$$ -\infty <= log\ odds <= \infty $$
+
+## Fitting the logistic model
+
+Just add a g to lm to make glm:
+(from linear model to "generalized" linear model)
+Here the family is "binomial" ("successes" and "failures")
+
+```{r}
+m = glm(won_pop ~ growth, 
+        data=hibbs,
+        family="binomial")
+summary(m)
+
+```
+
+## The Logistic Equation
+
+$$log\ odds\ prob = -1.608 + 1.046 \cdot growth$$
+
+$$ -1.608 + 1.046 \cdot growth > 0 $$
+when
+$$ 1.046 \cdot growth > 1.608$$
+$$ growth > 1.54 $$
+
+## Plotting the Logistic Equation (1/2)
+
+```{r}
+growth_seq =seq(-2, 5, 0.1)
+
+plot(growth_seq, 
+     predict(m, 
+             newdata=data.frame(growth=growth_seq)),
+     ylab="predicted LOG ODDS of winning", type="l",
+     xlab="Growth")
+
+
+```
+
+## Plotting the Logistic Equation (2/2)
+
+```{r}
+plot(growth_seq, 
+     predict(m, 
+             newdata=data.frame(growth=growth_seq),
+             type="response"),
+     ylab="predicted chance of winning", type="l",
+     xlab="Growth")
+
+```
+
+## The Gory Math
+
+$$log\ odds\ winning = -1.608 + 1.046 \cdot growth$$
+
+$$odds\ winning = e^{-1.608 + 1.046 \cdot growth}$$
+$$odds\ winning = e^{-1.608} \cdot e^{1.046 \cdot growth}$$
+$$odds\ winning = e^{-1.608} \cdot (e^{1.046})^{growth}$$
+$$odds\ winning = 0.2003 \cdot 2.85^{growth}$$
+
+How do we make sense of this?
+
+## Logistic Equation Interpretation
+
+$$odds\ winning = 0.2003 \cdot 2.85^{growth}$$
+
+With 0% growth the incumbent party has 0.2 odds of winning (meaning 1 win for every 5 losses).  For every additional 1% growth the incumbents odds of winning are multiplied by 2.85!
+
+$$ prob\ winning = \frac{0.2003 \cdot 2.85^{growth}}{
+1 + 0.2003 \cdot 2.85^{growth}
+}$$
+
+
+## Field Goals
+
+![](https://media.giphy.com/media/3oEduNSDOODtlE6CVG/giphy-downsized-large.gif)
+
+## The Data
+
+```{r}
+kickers <- read.csv("Kickers.csv")
+
+head(kickers)
+```
+
+## The Data (continued)
+
+```{r}
+summary(kickers)
+```
+
+## Plotting the Data (1/3)
+
+```{r, echo=TRUE, eval=FALSE}
+kickers %>% group_by(Distance) %>% 
+  summarize(rate = mean(Success), 
+            n=length(Success),
+            log_odds = log(rate/(1-rate))) %>% 
+  ggplot(aes(Distance, log_odds, size=n)) + 
+  geom_point()
+```
+
+## Plotting the Data (2/3)
+
+```{r}
+kickers %>% group_by(Distance) %>% 
+  summarize(rate = mean(Success), 
+            n=length(Success)) %>% 
+  ggplot(aes(Distance, rate, size=n)) + 
+  geom_point()
+```
+
+## Plotting the Data (3/3)
+
+Oh no!!!
+
+```{r}
+kickers %>% group_by(Distance) %>% 
+  summarize(rate = mean(Success), 
+            n=length(Success)) %>% 
+  ggplot(aes(Distance, rate, size=n)) + 
+  geom_point()+
+  geom_smooth(method="lm", se=FALSE)
+```
+
+## Logistic Regression?
+
+```{r}
+kickers %>% group_by(Distance) %>% 
+  summarize(rate = mean(Success), 
+            n=length(Success)) %>% 
+  ggplot(aes(Distance, rate, size=n)) + 
+  geom_point()+
+  geom_smooth(method = "glm", 
+    method.args = list(family = "binomial"), 
+    se = FALSE)
+```
+
+## Fitting the Model
+
+```{r, echo=TRUE}
+m.logistic <- glm(Success ~ Distance, data=kickers, family="binomial")
+coef(m.logistic)
+```
+
+$$log\ odds\ success = 5.72 - 0.1026 \cdot Distance$$
+$$ odds\ success = e^{5.72 - 0.1026 \cdot Distance}$$
+
+$$ odds\ success = e^{5.72} \cdot (e^{-0.1026})^{Distance} $$
+
+$$ odds\ success = 304.9 \cdot 0.9025^{Distance}$$
+
+## Interpreting the Model
+
+$$304.9 \cdot 0.9025^{Distance} = 1$$
+
+when
+
+$$ 0.9025^{Distance} = 0.003279764$$
+
+```{r, echo=TRUE}
+log(1/304.9, base=0.9025)
+```
+
+There are even odds to make a field goal at 56 yards.
+
+The odds get multiple by 0.9 every extra yard or but in half (roughly) every 7 yards.
+
+## On Grass or Turf?
+
+Use the following code to find the effect of kicking on grass relative to kicking on turf.
+
+```{r, echo=TRUE}
+m.logistic <- glm(Success ~ Distance + Grass,
+                  data=kickers, family="binomial")
+```
+
+## Looking at the Grass or Turf Model
+
+```{r}
+summary(m.logistic)
+```
+
+## Interpreting the Grass or Turf Model
+
+```{r, echo=TRUE}
+coef(m.logistic)
+```
+
+$$log\ odds\ success = 5.826 -0.103 \cdot Distance -0.168 \cdot Grass$$
+
+```{r, echo=TRUE}
+exp(coef(m.logistic))
+```
+
+$$odds\ success = 338.9 \cdot 0.902^{Distance} \cdot 0.845^{Grass}$$
+
+Does Grass affect field goals?
+
+## Plotting the Grass or Turf Model
+
+Red is Turf
+
+```{r}
+distance <- seq(18, 80, 1)
+plot(distance, predict(m.logistic,
+                       list(Distance=distance, Grass=rep(TRUE, 63)), type="response"), type="l", ylab="Predicted Success Rate", col="darkgreen")
+lines(distance, predict(m.logistic, list(Distance=distance, Grass=rep(FALSE, 63)), type="response"), type="l", ylab="Predicted Success Rate", col="red")
+```
+
+## Are Kickers Getting Better? (1/3)
+
+```{r, echo=TRUE}
+m.logistic <- glm(Success ~ Distance+Grass+Year,
+                  data=kickers, family="binomial")
+
+```
+
+## Are Kickers Getting Better? (2/3)
+
+```{r}
+summary(m.logistic)
+```
+
+## Are Kickers Getting Better? (3/3)
+
+```{r}
+distance <- seq(18, 80, 1)
+plot(distance, predict(m.logistic, list(Distance=distance, Grass=rep(TRUE, 63), Year=rep(2005,63)), type="response"), type="l", ylab="Predicted Success Rate")
+
+for (year in 2006:2015){
+  lines(distance, predict(m.logistic, list(Distance=distance, Grass=rep(TRUE, 63), Year=rep(year,63)), type="response"), type="l", ylab="Predicted Success Rate", col=year)
+}
+```
+
+## Is there something we could do better?
+
+```{r}
+kickers %>% group_by(Distance) %>% 
+  summarize(rate = mean(Success), 
+            n=length(Success)) %>% 
+  ggplot(aes(Distance, rate, size=n)) + 
+  geom_point()+
+  geom_smooth(method = "glm", 
+    method.args = list(family = "binomial"), 
+    se = FALSE)
+```
+
+## Trying to Understand What's Going On!
+
+Imagine a simpler world where kicks miss for one of two reasons:
+
+* The weren't long enough
+
+* The missed left or right
+
+I'll further pretend (for now) that these are independent.
+
+$$P(success) = P(long\ enough)\cdot P(good\ angle)$$
+
+## P(long enough)
+
+Let's pretend that at Distance = 0 all kicks are long enough and that P(long enough) goes down with distance but never drops below zero
+
+$$P(long\ enough) = \frac{1}{1 + e^{a + b\cdot Distance}}$$
+where I don't know what **a** and **b** are.
+
+## P(good angle)
+
+The width of the crossbar is about 6 meters, so if kickers aim for the middle they can miss in either direction by, as long as they miss by less than 3 meters and still make the kick.
+
+Let's express that acceptable miss as an angle:
+
+$$Acceptable\ Miss\ Angle < sin(\frac{3}{Distance})$$
+
+## P(good angle) continued
+
+Let's assume that kickers angles are normally distributed around dead center with a standard deviation of $\sigma$.
+
+Then the probability of missing is the chance of a z-score more than the acceptable miss angle.
+
+In other words, if the acceptable miss angle is $10^{\circ}$ and a kicker has a standard deviation
+of $5^{\circ}$ then the chance of a good angle is:
+
+```{r, echo=TRUE}
+pnorm(10/5) - pnorm(-10/5)
+
+2*pnorm(10/5) - 1
+```
+
+## P(good angle) ... putting it all together
+
+$$ P(good\ angle) = 2*pnorm(\frac{Largest\ Acceptable\ Miss}{\sigma}) - 1 $$
+$$Largest\ Acceptable\ Miss\ Angle = sin(\frac{3}{Distance})$$
+$$P(good\ angle) = 2*pnorm(\frac{sin(\frac{3}{Distance})}{\sigma}) - 1$$
+
+## P(success)
+
+$$P(success) = P(long\ enough)\cdot P(good\ angle)$$
+
+$$P(success) = \frac{2*pnorm(\frac{sin(\frac{3}{Distance})}{\sigma}) - 1}{1 + e^{a + b\cdot Distance}}$$
+We just need to use the data to solve for **a**, **b** and **$\sigma$**!
+
+## Nonlinear Least Squares Regression (1/3)
+
+```{r, echo=TRUE}
+success_at_distance = 
+kickers %>% group_by(Distance) %>% 
+  summarize(rate = mean(Success), 
+            n=length(Success))
+
+```
+
+
+## Nonlinear Least Squares Regression (2/3)
+
+```{r, echo=TRUE}
+m = nls(rate ~ (2*pnorm(sin(3/Distance)/s)-1)/
+              (1 + exp(a + b*Distance)),
+               start=list(s=pi/36, a = -9, b=0.15),
+               data=success_at_distance,
+               weights=n)
+```
+
+## Nonlinear Least Squares Regression (3/3)
+
+```{r}
+summary(m)
+```
+
+## Plotting the Results
+
+(with the old logistic regression in red)
+
+```{r}
+m.logistic <- glm(Success ~ Distance,
+                  data=kickers, family="binomial")
+
+distance <- seq(18, 80, 1)
+plot(distance, 
+     predict(m, list(Distance=distance), 
+             type="response"), 
+     type="l", ylab="Predicted Success Rate")
+
+points(success_at_distance$Distance, 
+       success_at_distance$rate)
+
+lines(distance, 
+      predict(m.logistic, list(Distance=distance), 
+              type="response"), col="red")
+
+```
+
+
+## Looking at the Two Factors
+
+P(Good Angle) in blue
+P(Far Enough) in green
+
+```{r}
+distance <- seq(18, 80, 1)
+plot(distance, 
+     predict(m, list(Distance=distance), 
+             type="response"), 
+     type="l", ylab="Predicted Success Rate")
+
+points(success_at_distance$Distance, 
+       success_at_distance$rate)
+
+lines(distance, 
+      2*pnorm(sin(3/distance)/coef(m)["s"]) - 1, col="blue")
+
+lines(distance, 
+      1/(1 + exp(coef(m)["a"] + coef(m)["b"]*distance)), 
+      col="green")
+
+```
+
+## We could keep going!
+
+* Maybe kickers angles aren't normally distributed.  Are there more mishits/outliers than we'd expect based on the normal distribution?  If so, maybe we need a distribution with fatter tails?  What about a t-distribution with 3 degrees of freedom?
+
+* What if angles are more unpredictable for longer kicks?  This could if kickers are less accurate when they try to kick harder or because footballs slice or hook.
+
+$$ P(good\ angle) = (2\cdot pt(\frac{sin(\frac{3}{Distance})}{\sigma_1+\sigma_2\cdot Distance}, df=3)-1)$$
+## The New Model
+
+```{r, echo=TRUE}
+m2 = nls(rate ~ (2*pt(sin(3/Distance)/(s+s2*Distance), df=3)-1)/
+          (1 + exp(a + b*Distance)),
+        start=list(s=5.501e-02, 
+                   a = -1.386e+01, 
+                   b=2.288e-01,
+                   s2=0),
+        data=success_at_distance,
+        weights=n)
+
+```
+
+## The New Plot
+
+```{r}
+
+distance <- seq(18, 80, 1)
+plot(distance, 
+     predict(m2, list(Distance=distance), 
+             type="response"), 
+     type="l", ylab="Predicted Success Rate")
+
+points(success_at_distance$Distance, 
+       success_at_distance$rate)
+
+lines(distance, 
+      2*pt(sin(3/distance)/(coef(m2)["s"]+coef(m2)["s2"]*distance), df=3) - 1, col="blue")
+
+lines(distance, 
+      1/(1 + exp(coef(m)["a"] + coef(m)["b"]*distance)), 
+      col="green")
+
+```

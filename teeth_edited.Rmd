@@ -1,0 +1,262 @@
+---
+title: "Teeth"
+output: pdf_document
+---
+
+
+
+
+```{r, echo=FALSE, warning=FALSE, results="hide", message=FALSE}
+teeth=read.table('teeth2.txt',header=T)
+
+
+library(ggplot2)
+library(psych)
+library(plyr)
+library(dplyr)
+library(cluster)
+library(corrgram)
+### Multiple plot function
+
+multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
+  require(grid)
+  plots <- c(list(...), plotlist)
+  numPlots = length(plots)
+  if (is.null(layout)) {
+    layout <- matrix(seq(1, cols * ceiling(numPlots/cols)),
+                    ncol = cols, nrow = ceiling(numPlots/cols))
+  }
+ if (numPlots==1) {
+    print(plots[[1]])
+  } else {
+    grid.newpage()
+    pushViewport(viewport(layout = grid.layout(nrow(layout), ncol(layout))))
+    for (i in 1:numPlots) {
+      matchidx <- as.data.frame(which(layout == i, arr.ind = TRUE))
+      print(plots[[i]], vp = viewport(layout.pos.row = matchidx$row,
+                                      layout.pos.col = matchidx$col))
+    }
+  }
+}
+### end multiplot function
+
+```
+
+The Teeth data set has data on the number of pairs of teeth, broken down into 8 different types of tooth pairs, for 32 species of heterodont mammals (mammals with different tooth morphologies).  Distributions of numbers of pairs by type are shown below.
+
+```{r, echo=FALSE}
+par(mfrow=c(2,2))
+for (i in 2:5){
+hist(teeth[,i], breaks=seq(min(teeth[,i])-0.5, max(teeth[,i])+1, 1), col=i, xlab=names(teeth)[i], main="")
+}
+```
+
+```{r, echo=FALSE}
+
+par(mfrow=c(2,2))
+for (i in 6:9){
+hist(teeth[,i], breaks=seq(min(teeth[,i])-0.5, max(teeth[,i])+1, 1), col=i, xlab=names(teeth)[i], main="")
+}
+```
+
+With this data set, I am particularly interested in looking for clusters of animals within the 32 species and in looking for associations between the numbers of teeth of different types.
+
+**Principal Components**
+
+```{r, echo=TRUE}
+principal(teeth[,2:9],nfactor=5,rotate=F,scores=T)
+```
+The first two principal components explain a combined 78% of the variance.  With a third component, the percentage of variance explained increases to 87%
+```{r, echo=TRUE}
+pc1 <- principal(teeth[,2:9],nfactor=5,rotate=F,scores=T)
+#round(pc1$loadings[,1:5],2)
+plot(pc1$values, type="b")
+abline(h=1)
+```
+Based on the skree plot, using two principal components seems appropriate.
+
+```{r}
+biplot(pc1$scores[,1:2],pc1$loadings[,1:2], cex=0.5)
+```
+We'll rotate the principal components to see if they become more readily interpretable.  
+
+**Rotated principal Components**
+```{r, message=FALSE}
+pc2= principal(teeth[,2:9],nfactor=2,rotate="varimax",scores=T)
+round(pc2$loadings[,1:2],2)
+biplot(pc2$scores[,1:2],pc2$loadings[,1:2], cex=0.6,xlabs=teeth[,1])
+pc2$loadings[,1:2]
+```
+
+The loadings and the biplots show that numbers of top molars contains the same information as the number of bottom molars and likewise the number of top pre-molars lines up closely with the number of bottom pre-molars but not as closely as top pre-molars lineup with top canines.  Top incisors are, on the other hand, orthogonal to bottom incisors and are strongly negatively associated with numbers of top and bottom molars.  
+
+Even with species labels shown on the plot, these principal components are somewhat difficult to comprehend.  The first principal component with large negative values for top and bottom molars could perhaps be described as the extent to which teeth are located towards the front of the mouth rather than the back.  
+
+**Clusters**
+
+```{r, echo=TRUE}
+d = teeth
+dst <- dist(d[,2:9], method = "euclidean") 
+dst2 <- dist(pc2$scores[,1:2], method = "euclidean") 
+fit <- hclust(dst, method="ward")
+fit2 <- hclust(dst2, method="ward")
+```
+
+The dendrogram shown below does an impressive job of clustering animals near what we know to be similar species.  There are some surprises, however, as based on their teeth, grey seals are deemed to be more similar to sea otters and even weasels and badgers than they are to other seals.  Also, raccoon are deemed to be more similar to wolves and bears than to weasels, badgers and otters.  
+
+While I was tempted to split these mammals into as many as 6 clusters (and it is possible to do so without splitting up the most closely relating animals) based on the plots shown below I decided that 5 clusters was the best choice when using Ward clustering.  The plots below show the mammals plotted on a graph of principal component 1 versus principal component two with the points colored by Ward clustering, first with 4 clusters, then 5 and finally with 6.  
+
+```{r, echo=TRUE}
+plot(fit, labels=d$ANIMAL, ylab='distance', cex=0.6, sub="", xlab="")
+rect.hclust(fit, k=5, border="red") 
+
+plot(fit2, labels=d$ANIMAL, ylab='distance', cex=0.6, sub="", xlab="")
+rect.hclust(fit2, k=5, border="red") 
+```
+
+```{r, echo=FALSE, message=FALSE}
+ward_cluster4 <- as.factor(cutree(fit,k=4)) 
+ward_cluster5 <- as.factor(cutree(fit,k=5))
+ward_cluster6 <- as.factor(cutree(fit,k=6)) 
+#pam_cluster <- as.factor(cutree(fit.pam,k=4)) 
+comp1 <- pc2$scores[,1]
+comp2 <- pc2$scores[,2]
+teeth_plus <- data.frame(teeth, comp1, comp2, ward_cluster4, ward_cluster5, ward_cluster6)
+par(mfrow=c(1,1))
+ggplot(teeth_plus, aes(x = comp1, y = comp2, color = ward_cluster4)) + geom_point()
+```
+
+```{r}
+ggplot(teeth_plus, aes(x = comp1, y = comp2, color = ward_cluster5)) + geom_point()
+
+```
+
+```{r}
+ggplot(teeth_plus, aes(x = comp1, y = comp2, color = ward_cluster6)) + geom_point()
+
+```
+
+
+Using clustering around mediods, shown below, 4 clusters appears to be the more natural choice.  In the graph with 5 clusters,  two of the clusters overlap and in the 6 cluster plot there are a least a couple of species that appear as if they could have been placed in a different cluster nearly as easily.
+
+
+```{r}
+par(mfrow=c(1,2))
+fit.pam <- pam(d[,2:9],4)
+plot(fit.pam)
+fit.pam <- pam(d[,2:9],5)
+plot(fit.pam)
+fit.pam <- pam(d[,2:9],6)
+plot(fit.pam)
+
+```
+
+**Examinging the Clusters**
+
+Finally, let's look at the distribution of number of teeth of each type for each cluster.  Here, again, are the clusters along with my best attempt to name them.
+
+Cluster 1 (Bats):
+```{r, echo=FALSE, message=FALSE}
+subset(teeth_plus, ward_cluster5==1)["ANIMAL"]
+```
+Cluster 2 (Gnawing Animals):
+```{r, echo=FALSE, message=FALSE}
+subset(teeth_plus, ward_cluster5==2)["ANIMAL"]
+```
+Cluster 3 (Misfits):
+```{r, echo=FALSE, message=FALSE}
+subset(teeth_plus, ward_cluster5==3)["ANIMAL"]
+```
+Cluster 4 (Cats, Mustelids and Seals):
+```{r, echo=FALSE, message=FALSE}
+subset(teeth_plus, ward_cluster5==4)["ANIMAL"]
+```
+Cluster 5 (Grazing Animals):
+```{r, echo=FALSE, message=FALSE}
+subset(teeth_plus, ward_cluster5==5)["ANIMAL"]
+```
+
+And here are the distributions of numbers of teeth pairs by type:
+
+```{r, echo=FALSE, message=FALSE}
+
+cdf <- ddply(teeth_plus, "ward_cluster5", summarise, mean=mean(TINCISOR))
+g1 <- ggplot(teeth_plus, aes(x=TINCISOR, fill=ward_cluster5))+
+         geom_histogram(binwidth=.5, alpha=.4, position="identity")+
+   scale_fill_discrete(name="Cluster",
+                         labels=c("Bats", "Gnawing", "Wolf, Bear & Raccoon", "Cats, Mustelids & Seals", "Grazing"))+
+         geom_vline(data=cdf, aes(xintercept=mean,  colour=ward_cluster5),
+                    linetype="dashed", size=1)+ theme(legend.position="top")
+
+
+cdf <- ddply(teeth_plus, "ward_cluster5", summarise, mean=mean(BINCISOR))
+g2 <- ggplot(teeth_plus, aes(x=BINCISOR, fill=ward_cluster5))+
+         geom_histogram(binwidth=.5, alpha=.4, position="identity")+
+   scale_fill_discrete(name="Cluster",
+                         labels=c("Bats", "Gnawing", "Wolf, Bear & Raccoon", "Cats, Mustelids & Seals", "Grazing"))+
+         geom_vline(data=cdf, aes(xintercept=mean,  colour=ward_cluster5),
+                    linetype="dashed", size=1)+ theme(legend.position="top")
+
+cdf <- ddply(teeth_plus, "ward_cluster5", summarise, mean=mean(TCANINE))
+g3 <- ggplot(teeth_plus, aes(x=TCANINE, fill=ward_cluster5))+
+         geom_histogram(binwidth=.5, alpha=.4, position="identity")+
+   scale_fill_discrete(name="Cluster",
+                         labels=c("Bats", "Gnawing", "Wolf, Bear & Raccoon", "Cats, Mustelids & Seals", "Grazing"))+
+         geom_vline(data=cdf, aes(xintercept=mean,  colour=ward_cluster5),
+                    linetype="dashed", size=1)+ theme(legend.position="top")
+
+cdf <- ddply(teeth_plus, "ward_cluster5", summarise, mean=mean(BCANINE))
+g4 <- ggplot(teeth_plus, aes(x=BCANINE, fill=ward_cluster5))+
+         geom_histogram(binwidth=.5, alpha=.4, position="identity")+
+   scale_fill_discrete(name="Cluster",
+                         labels=c("Bats", "Gnawing", "Wolf, Bear & Raccoon", "Cats, Mustelids & Seals", "Grazing"))+
+         geom_vline(data=cdf, aes(xintercept=mean,  colour=ward_cluster5),
+                    linetype="dashed", size=1)+ theme(legend.position="top")
+
+cdf <- ddply(teeth_plus, "ward_cluster5", summarise, mean=mean(TPRMOLAR))
+g5 <- ggplot(teeth_plus, aes(x=TPRMOLAR, fill=ward_cluster5))+
+         geom_histogram(binwidth=.5, alpha=.4, position="identity")+
+   scale_fill_discrete(name="Cluster",
+                         labels=c("Bats", "Gnawing", "Wolf, Bear & Raccoon", "Cats, Mustelids & Seals", "Grazing"))+
+         geom_vline(data=cdf, aes(xintercept=mean,  colour=ward_cluster5),
+                    linetype="dashed", size=1)+ theme(legend.position="top")
+
+cdf <- ddply(teeth_plus, "ward_cluster5", summarise, mean=mean(BPRMOLAR))
+g6 <- ggplot(teeth_plus, aes(x=BPRMOLAR, fill=ward_cluster5))+
+         geom_histogram(binwidth=.5, alpha=.4, position="identity")+
+   scale_fill_discrete(name="Cluster",
+                         labels=c("Bats", "Gnawing", "Wolf, Bear & Raccoon", "Cats, Mustelids & Seals", "Grazing"))+
+         geom_vline(data=cdf, aes(xintercept=mean,  colour=ward_cluster5),
+                    linetype="dashed", size=1)+ theme(legend.position="top")
+
+cdf <- ddply(teeth_plus, "ward_cluster5", summarise, mean=mean(TMOLAR))
+g7 <- ggplot(teeth_plus, aes(x=TMOLAR, fill=ward_cluster5))+
+         geom_histogram(binwidth=.5, alpha=.4, position="identity")+
+   scale_fill_discrete(name="Cluster",
+                         labels=c("Bats", "Gnawing", "Wolf, Bear & Raccoon", "Cats, Mustelids & Seals", "Grazing"))+
+         geom_vline(data=cdf, aes(xintercept=mean,  colour=ward_cluster5),
+                    linetype="dashed", size=1)+ theme(legend.position="top")
+
+cdf <- ddply(teeth_plus, "ward_cluster5", summarise, mean=mean(BMOLAR))
+g8 <- ggplot(teeth_plus, aes(x=BMOLAR, fill=ward_cluster5))+
+         geom_histogram(binwidth=.5, alpha=.4, position="identity")+
+   scale_fill_discrete(name="Cluster",
+                         labels=c("Bats", "Gnawing", "Wolf, Bear & Raccoon", "Cats, Mustelids & Seals", "Grazing"))+
+         geom_vline(data=cdf, aes(xintercept=mean,  colour=ward_cluster5),
+                    linetype="dashed", size=1)+ theme(legend.position="top")
+
+
+
+
+
+g1
+g2
+g3
+g4
+g5
+g6
+g7
+g8
+
+
+```

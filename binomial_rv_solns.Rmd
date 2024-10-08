@@ -1,0 +1,132 @@
+---
+title: "Binomial RV Lab Solutions"
+author: "Jared Cross"
+date: "2022-10-13"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Task 1
+
+The chance of 850 or more successes out of 1600 given a 0.5 probability of success.
+
+```{r}
+sum(dbinom(850:1600, 1600, prob=0.5))
+
+1/sum(dbinom(850:1600, 1600, prob=0.5))
+
+```
+
+
+The relative likelihood of 800 successes to 850 successes.
+
+```{r}
+dbinom(800, 1600, prob=0.5)/dbinom(850, 1600, prob=0.5)
+```
+
+# Task 2
+
+```{r}
+titanic = read.csv("https://raw.githubusercontent.com/jfcross4/advanced_stats/master/titanic_train.csv")
+
+library(dplyr)
+
+titanic %>% filter(Age<18) %>% summarize(n=n(), NumSurvived = sum(Survived), SurvivalRate=mean(Survived))
+
+titanic %>% filter(Age<18) %>% group_by(SibSp>=1) %>% summarize(n=n(), NumSurvived = sum(Survived), SurvivalRate=mean(Survived))
+
+```
+
+```{r}
+loners_survived = rbinom(1000, 43, 0.539823)
+sibsp_survived = rbinom(1000, 70, 0.539823)
+
+loner_survival_rate = loners_survived/43
+sibsp_survival_rate = sibsp_survived/70
+
+difference_in_survival_rate = sibsp_survival_rate - loner_survival_rate
+
+mean(abs(difference_in_survival_rate) > 0.651-0.471)
+```
+
+# Task 3
+
+```{r}
+kobe = readRDS(url("https://github.com/jfcross4/advanced_stats/blob/master/kobe_basket.rds?raw=true"))
+
+shots = kobe$shot
+
+shots_after_hits = which(shots[-133]=="H")+1
+shots_after_misses = which(shots[-133]=="M")+1
+```
+
+```{r}
+mean(shots=="H")
+
+```
+
+```{r}
+length(shots[shots_after_hits]=="H")
+sum(shots[shots_after_hits]=="H")
+mean(shots[shots_after_hits]=="H")
+```
+
+```{r}
+length(shots[shots_after_misses]=="H")
+sum(shots[shots_after_misses]=="H")
+mean(shots[shots_after_misses]=="H")
+```
+
+```{r}
+shots_after_hits = rbinom(1000, 57, 0.4360902)
+shots_after_misses = rbinom(1000, 75, 0.4360902)
+
+after_hits_rate = shots_after_hits/57
+after_misses_rate = shots_after_misses/75
+
+difference_in_rate = after_hits_rate - after_misses_rate
+
+mean(abs(difference_in_rate) > 0.48 - 0.368)
+```
+
+# Task 4
+
+```{r}
+apple = readRDS(url("https://github.com/jfcross4/advanced_stats/blob/master/apple.rds?raw=true"))
+
+mean(apple)
+
+days_after_up = which(apple[-5730]==TRUE)+1
+days_after_down = which(apple[-5730]==FALSE)+1
+```
+
+
+```{r}
+length(apple[days_after_up])
+sum(apple[days_after_up])
+mean(apple[days_after_up])
+```
+
+```{r}
+length(apple[days_after_down])
+sum(apple[days_after_down])
+mean(apple[days_after_down])
+```
+
+
+```{r}
+ups_after_ups = rbinom(1000, 3067, 0.5352531)
+ups_after_downs = rbinom(1000, 2662, 0.5352531)
+
+ups_after_ups_rate = ups_after_ups/3067
+ups_after_downs_rate = ups_after_downs/2662
+
+
+difference_in_rate = ups_after_ups_rate - ups_after_downs_rate
+
+mean(abs(difference_in_rate) > 0.5514651 - 0.5210303)
+
+```

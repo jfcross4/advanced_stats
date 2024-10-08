@@ -1,0 +1,443 @@
+---
+title: "Making Simple 538 Based March Madness Predictions"
+author: "Jared Cross"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, eval=FALSE)
+```
+
+## The Competition
+
+The 2024 Kaggle March Mania competition has not been posted yet, so we don't know exactly what the rules will be.  Most likely, it will be quite similar to the 2023 competition.  So, it's a good idea to start by reading about the 2023 competition.  
+
+<a href="https://www.kaggle.com/competitions/march-machine-learning-mania-2023/overview" target="_blank">2023 Competition overview</a>
+
+
+The following R code is designed to make predictions for the 2023 Tournament.  It would estimates of team qualities from 538 (a website that no longer exists) and turns them into predictions.  This is meant to give you an idea of how this competition works, how you might go about making predictions, and how those predictions are evaluated.  We'll talk about each of these things in more detail.  Take your time when working through this lab.  You don't have to finish it today but you should try to understand the parts that you do complete.
+
+On to the R code!
+
+## Packages
+
+There are two packages you'll need to load:
+
+```{r}
+library(tidyverse)
+library(reshape2)
+```
+
+# 538 Predictions
+
+Nate Silver and the folks at 538 have done the hard work of rating Men's and Women's basketball teams from 2016 to the present.  In this lab, we can take their team ratings, adjust their formula for using team ratings to project tournament games and make predictions for this year's Kaggle competition.
+
+```{r}
+M538 = read.csv("https://raw.githubusercontent.com/jfcross4/advanced_stats/master/stage2data/538ratingsMen.csv")
+
+W538 = read.csv("https://raw.githubusercontent.com/jfcross4/advanced_stats/master/stage2data/538ratingsWomen.csv")
+```
+
+These ratings were all made prior to the start of each year's tournament.  Take a look at these ratings and find the most dominant teams entering recent tournaments:
+
+```{r, eval=FALSE}
+View(M538)
+
+View(W538)
+```
+
+You can find out more about the methodology behind these ratings here:
+<a href="https://fivethirtyeight.com/features/how-our-march-madness-predictions-work-2/" target="_blank">Explanation</a>
+
+One thing you'll see half-way through this description is a formula for turning these ratings into a game prediction:
+
+$$ \frac{1}{1 + 10^{travel\_adj\_rating\_diff \cdot \frac{30.464}{400}}}$$
+We can turn that into a formula for predicting the chance that "team 1" beats "team 2":
+
+```{r}
+pred538 <- function(r1, r2){
+  1/(1+ 10^((r2-r1)*30.464/400))
+}
+```
+
+Suppose the UConn Women's team of 2016 (the most dominant team in this time period with a rating of 113) faces off against another great team, last year's South Carolina team (106 rating), what are UConn's chances?
+
+```{r}
+pred538(113, 106)
+```
+
+Let's first use these ratings to make forecasts for games that have already taken place and see how we do.
+
+First, let's get results from tournament games between 2016 and 2022:
+
+```{r}
+M_results = read.csv("https://raw.githubusercontent.com/jfcross4/advanced_stats/master/stage2data/Mresults2016_2022.csv")
+
+W_results = read.csv("https://raw.githubusercontent.com/jfcross4/advanced_stats/master/stage2data/Wresults2016_2022.csv")
+```
+
+and take a look:
+
+```{r, eval=FALSE}
+View(M_results)
+View(W_results)
+```
+
+Next, let's join these results with 538's team ratings from each year:
+
+```{r}
+Mresults_with_ratings = M_results %>% 
+  left_join(M538 %>% 
+            select(Season, 
+                   TeamID, 
+                   team1rating = X538rating),
+          by=c("Season", "team1"="TeamID")) %>%
+  left_join(M538 %>% 
+              select(Season, 
+                     TeamID, 
+                     team2rating = X538rating),
+            by=c("Season", "team2"="TeamID"))
+
+
+Wresults_with_ratings = W_results %>% 
+  left_join(W538 %>% 
+              select(Season, 
+                     TeamID, 
+                     team1rating = X538rating),
+            by=c("Season", "team1"="TeamID")) %>%
+  left_join(W538 %>% 
+              select(Season, 
+                     TeamID, 
+                     team2rating = X538rating),
+            by=c("Season", "team2"="TeamID"))
+
+```
+
+Then we can use the formula from 538's description to make predictions for every game:
+
+```{r}
+Mresults_with_ratings = Mresults_with_ratings %>% 
+  mutate(Pred = pred538(team1rating, team2rating))
+
+Wresults_with_ratings = Wresults_with_ratings %>% 
+  mutate(Pred = pred538(team1rating, team2rating))
+```
+
+Let's take another look:
+
+```{r, eval=FALSE}
+View(Mresults_with_ratings)
+
+View(Wresults_with_ratings)
+```
+
+We can also see how well these predictions performed.  I'll use RMSE.  Kaggle is using Brier scores this year which (for events with only two possible outcomes) is equivalent to RMSE.
+
+```{r}
+RMSE = function(x,y){
+  sqrt(mean((x-y)^2))}
+
+Wresults_with_ratings %>%
+  summarize(RMSE(Pred, result))
+
+Mresults_with_ratings %>%
+  summarize(RMSE(Pred, result))
+
+```
+
+Could we improve these predictions by tweaking 538's formula?
+
+Within the formula:
+
+$$ \frac{1}{1 + 10^{travel\_adj\_rating\_diff \cdot \frac{30.464}{400}}}$$
+
+we can tweak how heavily the favorite is favored by making the number $30.464$ either larger or smaller.  We can also see whether a different number would have made more accurate predictions in the past by fitting a model based on past tournament games.  For example:
+
+```{r}
+m = nls(result ~ 
+      1/(1+ 10^((team2rating-team1rating)*a/400)),
+    data=Mresults_with_ratings,
+    start=list(a=30))
+
+summary(m) 
+# To find what value of "a" makes the best predictions historically
+```
+
+We can do the same thing for the Women's tournament:
+
+```{r}
+m = nls(result ~ 
+      1/(1+ 10^((team2rating-team1rating)*a/400)),
+    data=Wresults_with_ratings,
+    start=list(a=30))
+
+summary(m) 
+```
+
+Does some number other than $30.464$ look like it would have performed better? If so, we can make a new version of 538's formula with our value for a:
+
+```{r}
+pred538_adjusted <- function(r1, r2){
+  1/(1+ 10^((r2-r1)*24.5/400))
+}
+```
+
+and use it to make projections on the tournament:
+
+```{r}
+Mresults_with_ratings = Mresults_with_ratings %>% 
+  mutate(Pred_adj = pred538_adjusted(team1rating, team2rating))
+
+Wresults_with_ratings = Wresults_with_ratings %>% 
+  mutate(Pred_adj = pred538_adjusted(team1rating, team2rating))
+```
+
+and see how those RMSE's compare:
+
+```{r}
+Mresults_with_ratings %>%
+  summarize(
+    RMSE(Pred, result),
+    RMSE(Pred_adj, result)
+  )
+
+Wresults_with_ratings %>%
+  summarize(
+    RMSE(Pred, result),
+    RMSE(Pred_adj, result)
+  )
+```
+
+At this point it's worth pointing out that we're cheating at least a little bit.  By fitting our model based on past tournament games we've ensured ourselves a model with lower RMSE.  (Will it do better out of sample?  That's the question!)
+
+We can also see how these predictions compare to the predictions using 538's original formula.  In the graphs below, the black line show how our adjusted formula's predictions compare to the original formula's predictions.  The straight red line shows where predictions and adjusted predictions are the same.
+
+```{r}
+Mresults_with_ratings %>%
+  ggplot(aes(Pred, Pred_adj))+
+  geom_line()+
+  geom_abline(slope=1, intercept=0,
+              color="red")
+
+
+Wresults_with_ratings %>%
+  ggplot(aes(Pred, Pred_adj))+
+  geom_line()+
+  geom_abline(slope=1, intercept=0,
+              color="red")
+```
+
+How would you describe how our adjusted formula compares to the original formula after looking at these graphs?
+
+# Home Field Advantage?
+
+Home field advantage is typically a big deal!  All of the games in the Men's tournament are played at neutral sites but that's not true in the Women's tournament.  In the first two rounds the 1-4 seeds play at home.  If you look at "Wresults_with_ratings" you'll see a "home" column that takes on the value of 1 if team1 is at home and -1 if team1 is away (and 0 for neutral site games).  We can write a formula to adjust games for home field advantage.  By default, I'll have HFA increase the home team's odds of victory by a factor of 1.6:
+
+```{r}
+home_adj <- function(pred, home, size=1.6){
+  odds <- (pred/(1-pred))*(size^home)
+  return(odds/(odds+1))
+}
+```
+
+We can make home field adjusted projections and see if they're more accurate:
+
+```{r}
+Wresults_with_ratings = 
+  Wresults_with_ratings %>%
+  mutate(PredHF = home_adj(Pred_adj, home))
+
+Wresults_with_ratings %>%
+  summarize(
+    RMSE(Pred, result),
+    RMSE(Pred_adj, result),
+    RMSE(PredHF, result)
+  )
+
+```
+
+Maybe that home field advantage factor is too big for the tournament.  I could scale it down:
+
+```{r}
+Wresults_with_ratings = 
+  Wresults_with_ratings %>%
+  mutate(PredHF = home_adj(Pred_adj, home, size=1.3))
+
+Wresults_with_ratings %>%
+  summarize(
+    RMSE(Pred, result),
+    RMSE(Pred_adj, result),
+    RMSE(PredHF, result)
+  )
+```
+
+Or we could try to find what size of home field advantage would have given us the best predictions in past tournaments:
+
+```{r}
+m_home = nls(result ~ 
+   ((Pred_adj/(1-Pred_adj))*(size^home))/
+   ((Pred_adj/(1-Pred_adj))*(size^home)+1),
+             data=Wresults_with_ratings,
+             start=list(size=1.6))
+             
+summary(m_home)
+
+```
+
+Surprisingly (to me, at least) it seems like home field advantage has been at most a small advantage in past Women's tournaments.
+
+# Forecasting the 2023 Tournament
+
+Now's let's get to the main event, projecting the 2023 Tournament.  Kaggle provides a file with a line for a potential match up between every college basketball team and every other college basketball team (regardless of whether they are in the tournament or not):
+
+```{r}
+sample_submission = read.csv("https://raw.githubusercontent.com/jfcross4/advanced_stats/master/stage2data/SampleSubmission2023.csv")
+```
+
+Take a look:
+
+```{r, eval=FALSE}
+View(sample_submission)
+```
+
+There's an ID for each game and a default prediction of 0.5 for each game.  The ID has the year and the two team ID's.  We have to predict the chance that the first team listed (in the ID) will beat the second team listed.  The overwhelming majority of these games not only won't happen but can't happen because most of these team's aren't in the tournament.  So, we can leave many of these projections as 0.5 but we should change them for games that involve two team's actually in the tournament.  Let's take the ID's and split them up to get the team id's in separate columns.  I'll create a function to do that:
+
+```{r}
+games_to_predict = function(SampleSubmission){
+  games.to.predict <- cbind(SampleSubmission$ID, 
+                            colsplit(SampleSubmission$ID, 
+                                     pattern = "_", 
+                                     names = c('Season', 'team1', 'team2')))   
+  colnames(games.to.predict)[1] <- "ID"
+  games.to.predict$home <- 0
+  return(games.to.predict)
+}
+```
+
+and then use the function:
+
+```{r}
+games = games_to_predict(sample_submission)
+```
+
+```{r, eval=FALSE}
+View(games)
+```
+
+Now, we can split these up and match them with 538 formulas just as we did with the historical games:
+
+```{r}
+Wgames = games %>% filter(team1 >= 3000)
+Mgames = games %>% filter(team1 < 3000)
+
+
+Mgames_with_ratings = Mgames %>% 
+  left_join(M538 %>% 
+              select(Season, 
+                     TeamID, 
+                     team1rating = X538rating),
+            by=c("Season", "team1"="TeamID")) %>%
+  left_join(M538 %>% 
+              select(Season, 
+                     TeamID, 
+                     team2rating = X538rating),
+            by=c("Season", "team2"="TeamID"))
+
+Wgames_with_ratings = Wgames %>% 
+  left_join(W538 %>% 
+              select(Season, 
+                     TeamID, 
+                     team1rating = X538rating),
+            by=c("Season", "team1"="TeamID")) %>%
+  left_join(W538 %>% 
+              select(Season, 
+                     TeamID, 
+                     team2rating = X538rating),
+            by=c("Season", "team2"="TeamID"))
+```
+
+Now we can use our adjusted 538 formula (or the original if you prefer!) to make predictions:
+
+```{r}
+Wgames_with_ratings = 
+Wgames_with_ratings %>%
+  mutate(Pred = pred538_adjusted(team1rating, team2rating))
+
+Mgames_with_ratings = 
+  Mgames_with_ratings %>%
+  mutate(Pred = pred538_adjusted(team1rating, team2rating))
+```
+
+Now, let's bind them together, replace NA predictions with 0.5 and make a .csv file that we could submit to Kaggle.
+
+```{r}
+games_with_ratings = rbind(Wgames_with_ratings,
+      Mgames_with_ratings)
+
+games_with_ratings$Pred[is.na(games_with_ratings$Pred)] = 0.50
+
+write.csv(games_with_ratings %>%
+            select(ID, Pred), 
+          file="kaggle_predictions.csv",
+          row.names = FALSE)
+```
+
+# Going Further
+
+Suppose I'd like to gamble!
+(Warning: Be Careful!  It is easy to mess up your predictions this way.  Make sure your predictions look the way you want them too before submitting them to Kaggle.)
+
+* Scenario #1: I'm looking at the Women's tournament and I'm convinced that South Florida is going to beat Marquette in the first round (for example).
+
+First, I find their teamID's in the 538 data:
+
+```{r}
+View(W538)
+```
+
+It looks like Marquette is 3266 and South Florida is 3378.  The way the submission file works, the lower number ID is always the first team so I can find that game as:
+
+```{r}
+games_with_ratings %>% 
+  filter(team1==3266, team2==3378)
+```
+
+Since Marquette is team1, predicting that South Florida is sure to win, is the same as changing Pred to 0.  
+
+I need to be careful to only change one game!
+
+```{r}
+games_with_ratings = 
+games_with_ratings %>%
+  mutate(Pred = ifelse(ID=="2023_3266_3378", 0, Pred))
+```
+
+* Scenario #2: I'm looking at the Men's tournament and I'm convinced that Kansas is going to win it all.
+
+First, I find Kansas's team ID:
+
+```{r}
+View(M538)
+```
+
+Kansas is team 1242.
+
+I'll need to make two types of changes.  Whenever Kansas is team1, I'll need to change Pred to 1 and whenever Kansas is team2, I'll need to change Pred to 0.
+
+```{r}
+games_with_ratings = 
+    games_with_ratings %>%
+    mutate(Pred = ifelse(team1==1242, 1, Pred),
+           Pred = ifelse(team2==1242, 0, Pred))
+```
+
+**Extra warning!**  Be thoughtful about whether you're editing a "games_with_ratings" data frame that you've already edited in some other way.  If you mess up you can recreate "games_with_ratings" from:
+
+```{r}
+games_with_ratings = rbind(Wgames_with_ratings,
+      Mgames_with_ratings)
+
+games_with_ratings$Pred[is.na(games_with_ratings$Pred)] = 0.50
+```
+
+

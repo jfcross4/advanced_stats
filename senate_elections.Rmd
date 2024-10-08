@@ -1,0 +1,216 @@
+---
+title: "Senate Elections and dplyr"
+author: "Jared Cross"
+date: "2022-10-31"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, 
+                      warning=FALSE, 
+                      message=FALSE,
+                      eval=FALSE)
+```
+
+## dplyr
+
+dplyr is a package for data manipulation.  If you want a pdf with a summary of dplyr's functions, you can find one [here](https://raw.githubusercontent.com/rstudio/cheatsheets/main/data-transformation.pdf){target="_blank"}.  And [here](https://dplyr.tidyverse.org/){target="_blank"} is an official tutorial.  You are free to work that that tutorial in addition or even instead of this one if you prefer Star Wars to primary elections (although time permitting, I'd like you to come back to this).
+
+## Senate Polling Data
+
+We're going to use polling data [collected by 538](https://projects.fivethirtyeight.com/2022-election-forecast/){target="_blank"}. 
+
+```{r}
+library(dplyr)
+
+polls = read.csv("senate_polls.csv")
+
+#View(polls)
+```
+
+
+
+```{r}
+dem_primary_polls <- polls %>% filter(stage=="primary", party=="DEM")
+
+#View(dem_primary_polls)
+
+dem_primary_polls <- dem_primary_polls %>% 
+  mutate(start_date=as.Date(start_date, "%m/%d/%y"),
+         end_date=as.Date(start_date, "%m/%d/%y"),
+         create_date=as.Date(created_at, "%m/%d/%y")
+         ) 
+```
+
+# Filter and the "Pipe" %>%
+
+The Pipe, %>%, acts as "and then" or put another way, it takes whatever you've done to your data thus far (in your "pipeline") and sends, via pipe, to the next stage in the process.  In the examples below, we'll just start with the whole data frame and pass it through a filter.
+
+```{r}
+dem_primary_polls %>% filter(pollster=="YouGov")
+
+dem_primary_polls %>% filter(state=="Iowa")
+
+dem_primary_polls %>% filter(answer=="Sanders")
+
+dem_primary_polls %>% filter(answer=="Sanders", state=="Iowa", pollster=="YouGov", start_date >= "2020/1/1")
+
+```
+
+We could also pass these into a View function
+
+```{r, eval=FALSE}
+dem_primary_polls %>% filter(pollster=="YouGov") %>% View()
+
+dem_primary_polls %>% filter(state=="Iowa") %>% View()
+
+dem_primary_polls %>% filter(answer=="Sanders") %>% View()
+
+dem_primary_polls %>% filter(answer=="Sanders", state=="Iowa", pollster=="YouGov", start_date >= "2020/1/1") %>% View()
+
+```
+
+# Select and Arrange
+
+We can also select only certain columns of the data and we can do this on its own or add it to a previous pipe.  Arrange does exactly what you might think and hope it does.
+
+```{r}
+
+dem_primary_polls %>% select("end_date", "answer", "pct")
+
+dem_primary_polls %>% select(contains("date"))
+
+dem_primary_polls %>% select(contains("_date"))
+
+dem_primary_polls %>% filter(state=="Iowa", start_date >= "2020/1/1",answer=="Sanders") %>%
+  select("start_date", "pollster", "pct")
+
+dem_primary_polls %>% filter(state=="Iowa", start_date >= "2020/1/1",answer=="Sanders") %>%
+  select("start_date", "pollster", "pct") %>% arrange(start_date)
+
+dem_primary_polls %>% filter(state=="Iowa", start_date >= "2020/1/1",answer=="Sanders") %>%
+  select("start_date", "pollster", "pct") %>% arrange(desc(pct))
+
+```
+
+# Group By and Summarize
+
+Here's where things get really good.  Take a deep breath.  Group By and Summarize will allow us to get means, standard deviations (or whatever summary statistics we desire) for whatever subsets of the data we're interested in.  So, if I was interested in each candidate polling average in Iowa since the start of the year...
+
+```{r}
+dem_primary_polls %>% filter(state=="Iowa", start_date >= "2020/1/1") %>%
+  group_by(answer) %>%
+  summarize(mean(pct), sd(pct), n())
+
+```
+
+In the above code, n() count the number of rows for each group and, in this case, tells us the number of polls each candidate is found in.  We probably want to give our columns names and arrange this in an orderly way so here goes:
+
+```{r}
+dem_primary_polls %>% filter(state=="Iowa", start_date >= "2020/1/1") %>%
+  group_by(answer) %>%
+  summarize(polling_avg = mean(pct), sd_polls = sd(pct), num_polls = n()) %>%
+  filter(num_polls>2, polling_avg>2) %>% arrange(desc(polling_avg))
+```
+
+We could go a little nuts and do this for every state...  Notice that I'm opening up the start_date filter to get older polling here.
+
+```{r}
+dem_primary_polls %>% filter(start_date >= "2019/10/1")  %>%
+  group_by(answer, state) %>%
+  summarize(polling_avg = mean(pct), sd_polls = sd(pct), num_polls = n()) %>%
+  filter(num_polls>2, polling_avg>2, !is.na(state)) %>% arrange(desc(polling_avg))
+```
+
+# top_n
+
+Instead of summarizing, I can find the top poll for each candidate in each state
+
+```{r}
+dem_primary_polls %>% filter(start_date >= "2019/10/1")  %>%
+  group_by(answer, state) %>%
+  top_n(1, pct) %>% select(answer, state, pct, start_date) %>% arrange(desc(pct))
+```
+
+Or, I could get the polling average for each candidate in each state and then, close that group, group by just state and find the candidate who has the highest polling average in each state with at least 3 polls since October 1st:
+  
+  ```{r}
+dem_primary_polls %>% filter(start_date >= "2019/10/1")  %>%
+  group_by(answer, state) %>%
+  summarize(polling_avg = mean(pct), num_polls = n()) %>%
+  filter(num_polls>2, polling_avg>2, !is.na(state)) %>% arrange(desc(polling_avg)) %>%
+  ungroup() %>% group_by(state) %>% top_n(1, polling_avg)
+```
+
+Or, I could look at the top 3 in each state:
+  
+  ```{r}
+dem_primary_polls %>% filter(start_date >= "2019/10/1")  %>%
+  group_by(answer, state) %>%
+  summarize(polling_avg = mean(pct), num_polls = n()) %>%
+  filter(num_polls>2, polling_avg>2, !is.na(state)) %>% arrange(desc(polling_avg)) %>%
+  ungroup() %>% group_by(state) %>% top_n(3, polling_avg) %>% arrange(state, desc(polling_avg))
+```
+
+# Mutate
+
+I can also create new columns of data based on existing columns.  Don't worry about the "as.Date()" and "as.numeric()" functions below.  The code below simply calculates the how many days prior to the Iowa caucus each Iowa poll ended and assigns a weight based on that.  I could change the number, 0.98, to assign relatively more or less weight to recent polls.
+
+```{r, eval=FALSE}
+dem_primary_polls %>% filter(state=="Iowa")  %>%
+  mutate(days_before_iowa = as.numeric(as.Date("2020/02/03")-end_date),
+         iowa_weight = 0.98^days_before_iowa ) %>% 
+  select(end_date, days_before_iowa, iowa_weight, pct, answer, pollster) %>%
+  View()
+```
+
+Now, I'll use these weights to get a weighted polling average for each candidate.  This formula will look quite a bit like our formula for expected value (which uses probabilities as weights) but since these weights, unlike probabilities, won't add to 1, we'll need to divide by the sum of the weights.  Note that we're no longer filtering by date, so our summary will contain candidates who already dropped out.
+
+```{r}
+dem_primary_polls %>% filter(state=="Iowa")  %>%
+  mutate(days_before_iowa = as.numeric(as.Date("2020/02/03")-end_date),
+         iowa_weight = 0.98^days_before_iowa ) %>% 
+  group_by(answer) %>%
+  summarize(simple_polling_avg = mean(pct),
+            weighted_polling_avg = sum(pct*iowa_weight)/sum(iowa_weight),
+            num_polls = n()) %>%
+  filter(num_polls > 10, simple_polling_avg >=2) %>%
+  arrange(desc(weighted_polling_avg))
+  
+  
+```
+
+We could select candidates by name:
+
+```{r}
+dem_primary_polls %>% filter(state=="Iowa")  %>%
+  mutate(days_before_iowa = as.numeric(as.Date("2020/02/03")-end_date),
+         iowa_weight = 0.98^days_before_iowa ) %>% 
+  group_by(answer) %>%
+  summarize(simple_polling_avg = mean(pct),
+            weighted_polling_avg = sum(pct*iowa_weight)/sum(iowa_weight),
+            num_polls = n()) %>%
+  filter(num_polls > 10, simple_polling_avg >=2) %>%
+  arrange(desc(weighted_polling_avg)) %>%
+  filter(answer %in% c("Biden", "Sanders", "Buttigieg", "Warren", "Klobuchar", "Steyer"))
+```
+
+or we could choose only candidates with a recent poll.  This is in some ways more elegant but we need to sort the data by "end_date" and find the most recent poll for each candidate.
+
+```{r}
+dem_primary_polls %>% filter(state=="Iowa")  %>%
+  mutate(days_before_iowa = as.numeric(as.Date("2020/02/03")-end_date),
+         iowa_weight = 0.98^days_before_iowa ) %>% 
+  group_by(answer) %>% arrange(desc(end_date)) %>% 
+  summarize(simple_polling_avg = mean(pct),
+            weighted_polling_avg = sum(pct*iowa_weight)/sum(iowa_weight),
+            num_polls = n(),
+            most_recent_poll = first(end_date)) %>%
+  filter(num_polls > 10, simple_polling_avg >=2) %>%
+  arrange(desc(weighted_polling_avg)) %>%
+  filter(most_recent_poll > "2020/01/01")
+```
+
+# The Best Part!
+
+Whatever code you wrote/used today will stay the same but if you run it a week from today, you will get a different result!  That's because 538 will update their github page with the latest polls in the mean time.  Try writing code right now that you can run next Monday to make a prediction for the Iowa caucus.  You should save it in a .R file (Go to File/New File/R Script to create one).  On Monday, you'll be able to run this code and create a prediction in seconds.

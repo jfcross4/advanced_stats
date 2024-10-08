@@ -1,0 +1,127 @@
+---
+title: "Speed Dating and Logistic Regression"
+author: "Advanced Statistics"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,warning=FALSE, message=FALSE, eval=FALSE)
+```
+
+## Notes
+
+For help, you may want to look over our notes on [logistic regression](https://rpubs.com/jcross/logistic).
+
+
+## Speed Dating Data
+
+The speed dating data set contains a whopping 195 pieces of information about 8,378 potential dating matches.  
+
+We'll focus on just a few of these but if you want to read a description of all of these categories and how this data was collected you can find that in the [linked document](https://docs.google.com/document/d/1foRO7C7Be0S1wiBkTSv3Ru0RlsxrGUAQMlsekIn3sqs/edit?usp=sharing).  
+
+We can read in the data as follows:
+
+```{r}
+dd <- read.csv('https://raw.githubusercontent.com/jfcross4/advanced_stats/master/Speed%20Dating%20Data.csv', header=TRUE)
+```
+
+## Rating Potential Matches
+
+Our potential daters rated each other in various categories including how attractive, intelligent and fun each potential partner appeared to be. The following code creates bar charts showing these ratings as well as the yes/no decisions ("dec") on whether they'd like to go on a date with the potential partner in question.
+
+```{r}
+library(ggplot2); library(dplyr)
+
+# attractiveness ratings
+dd %>% ggplot(aes(attr))+geom_bar()
+
+# intelligence ratings
+dd %>% ggplot(aes(intel))+geom_bar()
+
+# fun ratings
+dd %>% ggplot(aes(fun))+geom_bar()
+
+# decisions (0 = no, 1 = yes)
+dd %>% ggplot(aes(dec))+geom_bar()
+
+# The relationship between fun ratings and decisions
+dd %>% 
+  ggplot(aes(fun, dec)) + 
+  geom_jitter(size=0.5) + 
+  geom_smooth(method="lm")
+```
+
+*Q1:* The graph of decision versus "fun" ratings (created with the code above) includes a blue best-fit line.  We can think of this line as the result of a linear regression model such as:
+
+```{r, eval=FALSE}
+lm(dec ~ fun, data=dd)
+```
+
+What if anything is wrong with this model?
+
+# Logistic Regression
+
+We can also try to create a logistic regression model.  In this model, we're predicting the log odds that someone will decide to date based on their partner's "fun" rating:
+
+```{r}
+
+m <- glm(dec ~ fun, data=dd, family="binomial")
+```
+
+Let's take a look at the model in a few different ways.  "exp(coef(m))" exponentiates the coeficients (raises e to the power of the coefficients) like we did in class.
+
+```{r}
+summary(m)
+coef(m)
+exp(coef(m))
+```
+
+*Q2:* How would you interpret the exponentiated coefficients of the logistic regression model [the results of "exp(coef(m))"]?
+
+
+We can make predictions using this model and plot the predictions:
+
+```{r}
+predict(m, data.frame(fun=0:10)) #predict the log odds of a favorable decision
+
+
+predict(m, data.frame(fun=0:10), type="response")
+# predicts the probability of a favorable decision
+
+plot(0:10, predict(m, data.frame(fun=0:10), type="response"), type="l", xlab="fun",
+     ylab="Probability of Dating")
+# plots the probability of a favorable decision against "fun" rating.
+
+```
+
+*Q3:* How fun does someone need to be in order to have even odds (1:1) of getting a date?
+
+*Q4:* Rewrite some of the code above in order to use intelligence ratings rather than fun ratings.  How intelligent does someone need to be in order to have even odds to get a date?
+
+*Q5:* Using logistic regression models, determine which variable tells us the most about whether someone will get a date: fun, intelligence or attractiveness?  How did you determine this?
+
+## ggplot and Logistic Regression
+
+We can also plot the best-fit logistic regression curves using ggplot as follows:
+
+```{r}
+dd %>% 
+  ggplot(aes(fun, dec)) + 
+  geom_jitter(size=0.5) + 
+  geom_smooth(method = "glm", 
+    method.args = list(family = "binomial"), 
+    se = FALSE) 
+
+```
+
+# Multiple Variables
+
+Just as with linear regression models, we can build logistic regression models with multiple variables.  The following model attempts to predict yes/no decisions based on fun, attractiveness, sincerity, ambitiousness and shared interest ratings.
+
+```{r}
+m <- glm(dec ~ fun+attr+intel+sinc+amb+shar, data=dd, family="binomial")
+
+summary(m)
+```
+
+*Q6:* What insights does the multiple logistic regression model provide?
