@@ -45,13 +45,14 @@ pres_polls =
   pres_polls %>% 
     select(poll_id, pollster_id, pollster, 
     numeric_grade, pollscore, methodology, 
-    state, start_date, end_date, question_id,                sample_size, population, partisan,party, 
+    state, start_date, end_date, question_id, 
+    sample_size, population, partisan,party, 
     answer, candidate_id, candidate_name, pct)
     
 View(pres_polls)
 ```
 
-The next thing I want to do is to tell R what types of data it's dealing which. Some of these variables, like "population" are *factor* variables, which is another term for a categorical variable.  The *populations* of these polls are are either "a" (adults), "lv" (likely voters), "rv" (registered voters) or "v" (voters, I believe).
+The next thing I want to do is to tell R what types of data it's dealing with. Some of these variables, like "population" are *factor* variables, which is another term for a categorical variable.  The *populations* of these polls are are either "a" (adults), "lv" (likely voters), "rv" (registered voters) or "v" (voters, I believe).
 
 There are also two columns, "start_date" and "end_date" which contain dates (of when the poll was conducted) but R just treat these columns as strings of text unless we tell it that they are dates.  We'll tell R what it's dealing with use a variant of the *mutate* function as the functions "as.factor" and "as.Date":
 
