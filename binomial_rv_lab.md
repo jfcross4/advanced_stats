@@ -3,7 +3,7 @@
 
 # Soccer Player Birthdays
 
-Researchers recorder the birth months of 2,768 elite youth soccer players (on youth teams in the Spanish Professional Football League) from 2008-2009.  The found that 1,024 of them were born in the first 3 months of the year.  
+Researchers recorded the birth months of 2,768 elite youth soccer players (on youth teams in the Spanish Professional Football League) from 2008-2009.  They found that 1,024 of them were born in the first 3 months of the year.  
 
 <a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3761747/" target="_blank">Journal Article Here</a>
 
