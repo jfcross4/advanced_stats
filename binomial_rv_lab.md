@@ -33,7 +33,7 @@ That's small, but not nearly so small!  In fact, it's many (many many) times lar
 dbinom(692, 2768, prob=0.25)/dbinom(1024, 2768, prob=0.25)
 ```
 
-Another way to think about this is to determine how likely it is we'd have 1024 *or more* births in the first 4 months if player's only had a 25% chance of being born in those months.  To do this, we'll find the chance of every number of successes between 1024 and 2768 and add them all up:
+Another way to think about this is to determine how likely it is we'd have 1024 *or more* births in the first 3 months if player's only had a 25% chance of being born in those months.  To do this, we'll find the chance of every number of successes between 1024 and 2768 and add them all up:
 
 ```r
 sum(dbinom(1024:2768, 2768, prob=0.25))
