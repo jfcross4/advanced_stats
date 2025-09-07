@@ -1,0 +1,135 @@
+---
+title: "Poisson Random Variables"
+author: "Advanced Statistics"
+output: beamer_presentation
+---
+
+## Two Goals a Game... on average
+
+A soccer team scores two goals per game, what is the probability that they will score:
+\begin{itemize}
+\item 0 goals
+\item 1 goal
+\item 2 goals
+\item 3 goals
+\item ... 10 goals?
+\end{itemize}
+
+
+## Can we solve this using the binomial formula?
+
+Let's **pretend** (we'll return to whether this is reasonable in a minute) that this team has 5 trials or attempts a game and has a 40% chance of success in each trial.
+
+$n = 5, p = 0.4$
+$X =$ # of goals scored (a random variable)
+$E[X] = np = 2$ goals
+
+$P(X = k) = {n \choose k} p^k (1-p)^{n-k}$
+
+So,
+
+$P(X = 0) = {5 \choose 0} .4^0 (1-.4)^{5-0} = 0.6^5 =$ ```r .6^5```
+$P(X = 1) = {5 \choose 1} .4^1 (1-.4)^{5-1} =$ ```r dbinom(1, 5, .4)```
+
+## The Full Distribution of Probabilities given the 5 attempt assumption
+
+```{r, echo=FALSE}
+plot(0:5, dbinom(0:5, 5, .4), type="h", col="blue", xlab="Number of Goals", ylab="Probability")
+text(0:5, dbinom(0:5, 5, .4), dbinom(0:5, 5, .4))
+
+```
+
+## But what if they have 10 attempts?
+
+With 10 attempts 
+
+$n = 10$
+$p = 0.2$
+$E[X] = np = 2$ goals (just as before)
+
+$P(X = 1) = {10 \choose 1} .2^1 (1-.2)^{1-1} =$ ```r dbinom(1, 10, .2)```
+
+```{r, echo=FALSE}
+plot(0:5-0.1, dbinom(0:5, 5, .4), type="h", col="blue", xlab="Number of Goals", ylab="Probability", xlim=c(-0.5,6))
+text(0:5-0.1, dbinom(0:5, 5, .4), round(dbinom(0:5, 5, .4),3))
+
+points(0:10+.1, dbinom(0:10, 10, .2), type="h", col="red", xlab="Number of Goals", ylab="Probability")
+text(0:10+.1, dbinom(0:10, 10, .2), round(dbinom(0:10, 10, .2),3))
+```
+
+## But what if they have a large number of attempts?
+
+Blue: $n = 50, p = .04, E[X] = np = 2$
+
+Red: $n = 500, p = .004, E[X] = np = 2$
+
+```{r, echo=FALSE}
+n <- 50
+pg <- 2/n
+maxk <- 8
+plot(0:maxk-0.1, dbinom(0:maxk, n, pg), type="h", col="blue", xlab="Number of Goals", ylab="Probability", xlim=c(-0.5,8.5))
+text(0:maxk-0.25, dbinom(0:maxk, n, pg), round(dbinom(0:maxk, n, pg),3))
+
+n <- 500
+pg <- 2/n
+points(0:maxk+.1, dbinom(0:maxk, n, pg), type="h", col="red", xlab="Number of Goals", ylab="Probability")
+text(0:maxk+.25, dbinom(0:maxk, n, pg), round(dbinom(0:maxk, n, pg),3))
+```
+
+## Letting the Number of Attempts go to Infinity
+
+Instead of some number of attempts, $n,$ and rate of success, $p,$ we'll think about an expected number of successes $\lambda$ and let n, the number of attempts, go to infinity (and p go to zero).
+
+$P(X = k) = {n \choose k} p^k (1-p)^{n-k}$
+
+$p = \frac{\lambda}{n}$
+
+$P(X = k) = \lim_{n \to \infty} {n \choose k} (\frac{\lambda}{n})^k (1-\frac{\lambda}{n})^{n-k}$
+
+
+## What does this distribution look like?
+
+
+$P(X = k) = \lim_{n \to \infty} {n \choose k} (\frac{\lambda}{n})^k (1-\frac{\lambda}{n})^{n-k}$
+
+
+Can be simplified  to:
+
+$P(X = k)= \frac{\lambda^k }{k!} e^{-\lambda}$
+
+## Back to our soccer calculation:
+$P(X = k)= \frac{\lambda^k }{k!} e^{-\lambda}$
+
+$\lambda = 2$
+
+$P(X = 0)= \frac{2^0 }{0!} e^{-2} = e^{-2}$ = ```r round(exp(-2),3)```
+
+$P(X = 1)= \frac{2^1 }{1!} e^{-2} = 2 e^{-2}$ = ```r round(2*exp(-2),3)```
+
+$P(X = 2)= \frac{2^2 }{2!} e^{-2} =\frac{4}{2} e^{-2}$ = ```r round(2*exp(-2),3)```
+
+$P(X = 3)= \frac{2^3 }{3!} e^{-2} = \frac{8}{6} e^{-2}$ = ```r round((4/3)*exp(-2),3)```
+
+$P(X = 4)= \frac{2^4 }{4!} e^{-2} = \frac{16}{24} e^{-2}$ = ```r round((2/3)*exp(-2),3)```
+
+$P(X = 5)= \frac{2^5 }{5!} e^{-2} = \frac{32}{120} e^{-2}$ = ```r round((32/120)*exp(-2),3)```
+
+## When does this formula work?
+$P(X = k)= \frac{\lambda^k }{k!} e^{-\lambda}$
+
+For Rare Events when $p$ is very small or $n >> k$
+
+*and*
+
+rate of successes is constant
+
+Soccer goals and Hockey goals are “rare” relative to the number of plays in the game.
+
+I could also use this distribution to model the number of times that I win the Hamilton lottery in the next year or decade, the number of earthquakes (of a given magnitude in next century), the number of typos in a book or the number of mutations on a DNA strand.  
+
+
+
+
+
+
+

@@ -1,0 +1,100 @@
+---
+title: "Poisson Formula Derivation"
+author: "Advanced Statistics"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message=FALSE, warning=FALSE)
+```
+
+## Letting the Number of Attempts go to Infinity
+
+Instead of some number of attempts, $n,$ and rate of success, $p,$ we'll think about an expected number of successes $\lambda$ and let n, the number of attempts, go to infinity (and p go to zero).
+
+$P(X = k) = {n \choose k} p^k (1-p)^{n-k}$
+
+$p = \frac{\lambda}{n}$
+
+$P(X = k) = \lim_{n \to \infty} {n \choose k} (\frac{\lambda}{n})^k (1-\frac{\lambda}{n})^{n-k}$
+
+
+## What does this distribution look like?
+
+
+$P(X = k) = \lim_{n \to \infty} {n \choose k} (\frac{\lambda}{n})^k (1-\frac{\lambda}{n})^{n-k}$
+
+
+We'll rewrite this as:
+
+$P(X = k) = \frac{\lambda^k}{k!} \cdot   [k! \cdot {n \choose k} (\frac{1}{n})^k] \cdot [(1-\frac{\lambda}{n})^{n}]\cdot [(1-\frac{\lambda}{n})^{-k}]$
+
+and then break this into four parts:
+
+$P(X = k) = \frac{\lambda^k}{k!} \cdot   A \cdot B \cdot C$
+
+where $A =\lim_{n \to \infty} k! \cdot {n \choose k} (\frac{1}{n})^k$ and $B = \lim_{n \to \infty} (1-\frac{\lambda}{n})^{n}$ and $C = \lim_{n \to \infty} (1-\frac{\lambda}{n})^{-k}$
+
+
+
+
+
+## Starting with A:
+
+$A = \lim_{n \to \infty} k! \cdot {n \choose k} (\frac{1}{n})^k$
+
+$\lim_{n \to \infty} k! \cdot \frac{n!}{k! (n-k)!} (\frac{1}{n})^k$
+
+$\lim_{n \to \infty} \frac{n!}{(n-k)!} (\frac{1}{n})^k$
+
+$\lim_{n \to \infty} n \cdot (n-1) \cdot (n-2) \cdot ... \cdot (n-k+1) (\frac{1}{n})^k$
+
+$\lim_{n \to \infty} \frac{n \cdot (n-1) \cdot (n-2) \cdot ... \cdot (n-k+1)}{n^k}$
+
+$\lim_{n \to \infty} \frac{n}{n} \cdot \frac{n-1}{n} \cdot \frac{n-2}{n} \cdot ... \cdot \frac{n-k+1}{n} = 1 \cdot 1 \cdot 1 \cdot ... \cdot 1 = 1$
+
+So A just equals 1.
+
+## Now part B:
+
+
+$B = \lim_{n \to \infty} (1-\frac{\lambda}{n})^n$
+
+subtitute $j = -1 \cdot \frac{n}{\lambda}$ and we have
+
+$B = \lim_{j \to \infty} (1+\frac{1}{j})^{-1 \cdot \lambda j} = \lim_{j \to \infty} [(1+\frac{1}{j})^{j}]^{-1 \cdot \lambda}$
+
+But what is $\lim_{j \to \infty} (1+\frac{1}{j})^{j}$ ?
+
+## Euler's Number
+
+```{r, echo=FALSE}
+f <- function(x){
+  (1+1/x)^x
+}
+
+vals = seq(0, 8, 0.1)
+
+x <- 10^vals
+
+library(ggplot2)
+qplot(x, f(x))+
+  scale_x_log10()+
+  ylab("(1+1/x)^x")+
+  geom_hline(yintercept=exp(1), color="red")
+```
+
+
+## Finally, part C:
+
+So $B = e^{-\lambda}$
+
+What about C?  Recall, $C = \lim_{n \to \infty} (1-\frac{\lambda}{n})^{-k}$.
+
+and as $n \to \infty$ this becomes $1^{-k}$ or $\frac{1}{1^k}$ or just 1.
+
+Putting it all together we have:
+
+$P(X = k) = \frac{\lambda^k}{k!} \cdot   1 \cdot e^{-\lambda} \cdot 1$
+
+$P(X = k)= \frac{\lambda^k }{k!} e^{-\lambda}$

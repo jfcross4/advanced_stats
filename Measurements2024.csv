@@ -1,0 +1,51 @@
+Measurer,Measuree,BodyPart,Measurement_cm
+Lana,Ryan,Cubit,47
+Lana,Ryan,Digit,1.5
+Lana,Ryan,Span,19.2
+Lana,Ryan,Hand,9.5
+Lana,Ryan,Inch,3.5
+Lana,Ryan,Yard,89
+Lana,Ryan,Wingspan,178
+Lana,Ryan,Height,175.26
+Ryan,Lana,Cubit,46
+Ryan,Lana,Wingspan,170.5
+Ryan,Lana,Height,167.64
+Henryk,Tristan,Wingspan,182
+Henryk,Tristan,Cubit,50
+Henryk,Tristan,Height,177
+Ben,Tristan,Wingspan,182
+Ben,Tristan,Cubit,50
+Ben,Tristan,Height,177
+Loic,River,Cubit,43
+Loic,River,Wing Span,195
+Loic,River,height,194
+River,Loic,Cubit,46
+River,Loic,Wing Span,180
+River,Loic,height,181
+henryk,ben,Cubit,47
+henryk,ben,Wing Span,168
+henryk,ben,height,172
+ben,henryk,Cubit,50
+ben,henryk,Wing Span,171
+ben,henryk,height,168
+Naomi,Christiane,Cubit,40
+Naomi,Christiane,Wing Span,174
+Naomi,Christiane,Height,171
+Christiane,Naomi,Height,168
+Christiane ,Naomi,Wing Span,160
+Christiane ,Naomi,Cubit,40
+Christiane,James,wing span,176
+Christiane,James,height,176
+Christiane,James,cubit,46
+kamala,charlotte,height,169
+kamala,charlotte,wingspan,163
+charlotte,Kamala,height,163
+charlotte,Kamala,wingspan,162
+charlotte,Kamala,cubit,42
+zoya,rhea,height,174
+zoya,rhea,wingspan,179
+zoya,rhea,cubit,43
+rhea,zoya,height,169
+rhea,zoya,wingspan,171
+rhea,zoya,cubit,43
+kamala,charlotte,cubit,44

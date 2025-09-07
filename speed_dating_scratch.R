@@ -1,6 +1,6 @@
-https://docs.google.com/document/d/1foRO7C7Be0S1wiBkTSv3Ru0RlsxrGUAQMlsekIn3sqs/edit?usp=sharing
+#https://docs.google.com/document/d/1foRO7C7Be0S1wiBkTSv3Ru0RlsxrGUAQMlsekIn3sqs/edit?usp=sharing
 
-http://www.stat.columbia.edu/~gelman/stuff_for_blog/sheena.pdf
+#http://www.stat.columbia.edu/~gelman/stuff_for_blog/sheena.pdf
 
 dd <- read.csv('https://raw.githubusercontent.com/jfcross4/advanced_stats/master/Speed%20Dating%20Data.csv', header=TRUE)
 
@@ -29,14 +29,21 @@ m <- glm(dec ~ fun+attr+intel+sinc+amb+shar,
 
 summary(m)
 
+
+
 # age
 m <- glm(dec ~ I(age_o-age) + abs(age-age_o), 
          data=dd, family="binomial")
+
+summary(m)
 
 ## iid: subject who makes dec
 ## pid: subject who makes dec_o
 
 m <- glm(dec ~ attr + attr_o, 
+         data=dd, family="binomial")
+
+m <- glm(dec_o ~ attr + attr_o, 
          data=dd, family="binomial")
 
 # gender:	Female=0
@@ -45,6 +52,8 @@ m <- glm(dec ~ attr + attr_o,
 
 m <- glm(dec ~ attr*gender, 
          data=dd, family="binomial")
+
+summary(m)
 
 m <- glm(dec ~ fun*gender, 
          data=dd, family="binomial")
@@ -59,7 +68,8 @@ m <- glm(dec ~ amb*gender,
          data=dd, family="binomial")
 
 
-subset_of_columns = dd %>% dplyr:: select(fun, attr, intel, sinc, amb, shar, dec) 
+subset_of_columns = dd %>% 
+  dplyr:: select(fun, attr, intel, sinc, amb, shar, dec) 
 
 round(cor(subset_of_columns),2)
 

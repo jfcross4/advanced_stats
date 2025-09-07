@@ -47,9 +47,11 @@ se_a = sd_a/sqrt(n_a)
 se_b = sd_b/sqrt(n_b)
 
 se_diff = sqrt(se_a^2 + se_b^2)
+# [1] 2.8519
 
 t_score = diff/se_diff
 t_score
+# [1] 1.753217
 
 # H0: run clubs are equally good
 # Ha: one run club is better than the other

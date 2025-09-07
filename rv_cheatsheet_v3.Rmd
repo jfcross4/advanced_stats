@@ -91,12 +91,12 @@ $E[X] = \frac{1}{\lambda}$
 
 $Var[X] = \frac{1}{\lambda^2}$
 
-<!-- # Poisson Random Variables -->
+# Poisson Random Variables
 
-<!-- $X \sim Poisson(\lambda)$ where $\lambda$ is the mean number of events that occur in a process in which events occur continuously and independently at a constant average rate. -->
+$X \sim Poisson(\lambda)$ where $\lambda$ is the mean number of events that occur in a process in which events occur continuously and independently at a constant average rate.
 
-<!-- $P(X = k) = \frac{\lambda^k}{k!} e^{- \lambda}$ -->
+$P(X = k) = \frac{\lambda^k}{k!} e^{- \lambda}$
 
-<!-- $E[X] = {\lambda}$ -->
+$E[X] = {\lambda}$
 
-<!-- $Var[X] = {\lambda}$ -->
+$Var[X] = {\lambda}$
