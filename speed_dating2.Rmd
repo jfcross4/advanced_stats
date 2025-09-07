@@ -1,0 +1,205 @@
+---
+title: "Speed Dating Mixed Effects Models"
+author: "Advanced Statistics"
+output: html_document
+---
+
+[Data Description](https://docs.google.com/document/d/1foRO7C7Be0S1wiBkTSv3Ru0RlsxrGUAQMlsekIn3sqs/edit?usp=sharing)
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE, eval=FALSE)
+```
+
+## Getting the Data
+
+
+```{r data1, echo=TRUE}
+dd <- read.csv('https://raw.githubusercontent.com/jfcross4/advanced_stats/master/Speed%20Dating%20Data.csv', header=TRUE)
+
+```
+
+## Cleaning the Data
+
+```{r}
+library(tidyverse)
+
+
+# removing rows with missing information
+dd <- dd %>% 
+  filter(!is.na(pid), 
+         !is.na(iid), 
+         !is.na(attr))
+
+dd <- dd %>% 
+  mutate(pid = as.factor(pid), 
+         iid=as.factor(iid))
+```
+
+## A few quick looks at the data 
+(to jog our memories)
+
+```{r}
+# the total number of decisions that were made
+nrow(dd)
+
+#the fraction of decision that were "yes"
+mean(dd$dec) 
+
+# The number of distinct subjects (making dec)
+length(unique(dd$iid))
+
+# The number of distinct partners (making dec_o)
+length(unique(dd$pid))
+
+# attr is attractiveness rating by subject of their partner
+# attr_o is the attraviness rating by partner on night of event
+
+# likewise with sinc, intel, fun, amb, shar and like
+
+```
+
+Above that we see that our data includes information on the 8,166 speed dates of 551 could-be-daters and that people chose to date roughly 43% of their potential matches.  Let's see what else we can figure out!
+
+# Success Rates by Individual
+
+We could look at the rates at which partners are chosen for a date in a histogram:
+
+```{r}
+dd %>% 
+    group_by(pid) %>% 
+    summarize(dec_rate = mean(dec)) %>%
+    ggplot(aes(dec_rate)) + 
+  geom_histogram(bins=11, col="red")
+
+```
+
+We can also look at how choosiness varied by among the people making the decisions the same way:
+
+```{r}
+dd %>% 
+    group_by(iid) %>% 
+    summarize(dec_rate = mean(dec)) %>%
+    ggplot(aes(dec_rate)) + 
+  geom_histogram(bins=11, col="blue")
+```
+
+## Logistic Mixed Effects Model
+
+```{r}
+library(lme4)
+m <- glmer(dec ~ (1|pid) + (1|iid), data=dd, family="binomial")
+summary(m)
+```
+
+Take a long look at the summary.  The intercept is -0.43038...
+
+```{r}
+exp(-0.43038)
+```
+
+... which tells us that a "typical" speed dater has 0.65 odds of getting a date
+
+```{r}
+0.65/(1+0.65)
+```
+
+This amounts to about a 39% chance.  
+
+The summary also tells us that the standard deviation in date-getting (across potential partners) is 1.286...
+
+```{r}
+exp(1.286)
+```
+
+... which means that a suitor who is one standard deviation above average has 3.61 times better odds of getting a date...
+
+```{r}
+exp(1.286)*0.715
+```
+
+... or put another way, a +1 SD (standard deviation) dater is about 3.6:1 to get a date.
+
+**Question 1:** According to our model, the standard deviation in "iid" (decision makers tendency to say yes) is 1.455.  What does this mean? Who has more influence on the decision the partner or the decision maker?
+
+# Adding a Predictor
+
+Let's add attractiveness to our model:
+
+```{r}
+m.attr <- glmer(dec ~ attr+ (1|pid) + (1|iid), data=dd, family="binomial")
+summary(m.attr)
+```
+
+Looking again at the model summary, you'll see that the intercept has changed dramatically.  Why?  
+
+**Question 2:** How can we interpret this new intercept (and how does that differ from our interpretation of the intercept from our last model?)
+
+The summary also shows that the standard deviation in date-getting among individuals has decreased (from 1.286 in our previous model to 0.6036).  
+
+**Question 3:** Why has this number decreased?  How does our interpretation of this number differ between models?
+
+Maybe decision makers respond to attractivness in different ways, with some placing much more importance than others.  We can calculate individual "slopes" which tell us how much each decision maker valued attractiveness as follows:
+
+```{r}
+m.attr.slopes <- glmer(dec ~ (attr|iid), data=dd, family="binomial")
+summary(m.attr.slopes)
+```
+
+To look at the intercepts and attractiveness slopes for each decision maker we can write:
+
+```{r}
+ranef(m.attr.slopes)
+```
+
+We can calculate the mean intercepts and slopes as follows:
+
+```{r}
+apply(ranef(m.attr.slopes)$iid, 2, mean)
+```
+
+**Question 4:** How would you interpret these numbers?
+
+We can also calculate the standard deviations in these numbers (across decision makers):
+
+```{r}
+apply(ranef(m.attr.slopes)$iid, 2, sd)
+```
+
+For each decision maker, let's calculate the probability that they would date someone with they assigned an attractiveness of 5:
+
+```{r}
+logodds5 <- ranef(m.attr.slopes)$iid[,1] + ranef(m.attr.slopes)$iid[,2]*5
+odds5 <- exp(logodds5)
+probs5 <- odds5/(odds5+1)
+```
+
+Let's do the same for an attractiveness of 8 and then put this all in a data.frame along with decision maker id numbers:
+
+```{r}
+logodds8 <- ranef(m.attr.slopes)$iid[,1] + ranef(m.attr.slopes)$iid[,2]*8
+odds8 <- exp(logodds8)
+probs8 <- odds8/(odds8+1)
+
+iids <- unique(dd$iid)
+
+probs <- data.frame(iid = rep(iids,2), attr = as.factor(c(rep(5, 551), rep(8, 551))), prob=c(probs5, probs8))
+
+```
+
+Finally, let's make a slope graph!
+
+```{r}
+ggplot(data = probs, aes(x = attr, y = prob, group = iid)) +
+  geom_line(aes(color = iid, alpha = 0.5), size = 0.3) +
+  theme(legend.position = "none")
+
+```
+
+In this graph, each line represents one decision maker and each person's line shows our estimated probablity that they'd date someone whom they assigned attractiveness ratings of 5 and 8, respectively.  
+
+**Question 5:** According to our model, would some people rather date someone whom they find less attractive?  If so, how would such people show up on our graph?  What else do you observe in this graph?  (Try looking at individual lines and thinking about how you would describe the decision maker described by that line.)
+
+**Challenge:**
+
+Try creating a slope graph for intelligence (similar to the one you just made for attractiveness).  What are the notable differences in how would-be daters value intelligence compared to attractivness.  

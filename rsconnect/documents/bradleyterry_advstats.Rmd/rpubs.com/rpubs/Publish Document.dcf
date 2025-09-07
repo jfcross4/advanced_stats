@@ -1,0 +1,11 @@
+name: Publish Document
+title:
+username:
+account: rpubs
+server: rpubs.com
+hostUrl: rpubs.com
+appId: https://api.rpubs.com/api/v1/document/1013144/af769f91ad164895a03f49598aa2f3e7
+bundleId: https://api.rpubs.com/api/v1/document/1013144/af769f91ad164895a03f49598aa2f3e7
+url: http://rpubs.com/jcross/1013144
+when: 1678332238.12721
+lastSyncTime: 1678332238.12722

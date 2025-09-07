@@ -1,0 +1,170 @@
+---
+title: "Linear and Logistic Regression Questions"
+author: "Jared Cross"
+date: "`r Sys.Date()`"
+output:
+  pdf_document: default
+  html_document: default
+  word_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Spaceship Titanic
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+library(tidyverse)
+
+train = 
+  read.csv("https://raw.githubusercontent.com/jfcross4/advanced_stats/master/spaceship-titanic/train.csv")
+
+test = 
+  read.csv("https://raw.githubusercontent.com/jfcross4/advanced_stats/master/spaceship-titanic/test.csv")
+  
+test$Transported = NA
+
+cleanship = function(df){
+df %>%
+  mutate_at(c("Transported", "VIP", 
+        "CryoSleep"),
+           as.logical) %>%
+  mutate_at(c("HomePlanet",  
+            "Destination"),
+           as.factor) %>%
+  mutate_at(vars(RoomService:VRDeck),
+      list(log = ~log(.x + 1))) %>%
+  separate(Name, 
+          c("FirstN", "LastN"), 
+          " ", 
+          remove = FALSE, 
+          extra = "drop") %>%
+  separate(PassengerId, 
+          c("Party","PartyNr"), 
+          "_", 
+          remove = FALSE, 
+          extra = "drop") %>%
+  separate(Cabin, 
+          c("deck","num", "side"), 
+          "/", 
+          remove = FALSE, 
+          extra = "drop")
+}
+
+train = cleanship(train)
+
+test = cleanship(test)
+
+
+```
+
+## Linear Regression
+
+```{r}
+m1 = lm(Transported ~ CryoSleep,
+        data=train)
+
+summary(m1)
+```
+
+1. Please write an equation to predict the probability of being Transported from CryoSleep.
+
+\vspace{48pt}
+
+2. Can you reject the null hypothesis that there is no association between CryoSleep and Transported?
+
+
+\newpage
+3. Please interpret the equation that you wrote in #1.
+
+\vspace{48pt}
+
+
+
+# Room Service?
+
+```{r}
+# Note: 
+# RoomService_log = log(RoomService + 1)
+
+m2 = lm(Transported ~ RoomService_log,
+        data=train)
+
+coef(m2)
+```
+
+
+4. Please write an equation describing the relationship between room service and the chance of being transported.
+
+\vspace{48pt}
+
+5. Predict the chance of being transported for someone who spent 0 on room service.
+
+\vspace{48pt}
+
+6. Predict the chance of being transported for someone who spent 1000 on room service.
+
+\vspace{48pt}
+
+```{r}
+m3 = lm(Transported ~ 
+          RoomService_log + CryoSleep,
+        data=train)
+
+coef(m3)
+```
+
+7. Predict the chance of being transported for someone who spent 0 on room service and who was *not* in CryoSleep.
+
+\newpage
+
+8. Predict the chance of being transported for someone who spent 1000 on room service and who was in CryoSleep.
+
+\vspace{48pt}
+
+# Logistic Regression
+
+```{r}
+m4 = glm(Transported ~ CryoSleep,
+        data=train,
+        family="binomial")
+
+coef(m4)
+```
+
+9. Write an equation to predict the *log odds* of being transported based on Cryosleep.
+
+\vspace{48pt}
+
+```{r}
+exp(coef(m4))
+```
+
+10. Based on this logistic regression, write an equation to predict the odds of being transported based on Cryosleep.
+
+\vspace{48pt}
+
+11. Based on this logistic regression, predict the odds of being transported for someone who was in Cryosleep.
+
+\vspace{48pt}
+
+12. Based on this logistic regression, predict the probability of being transported for someone who was in Cryosleep.
+
+\vspace{48pt}
+
+\newpage
+
+# Bonus
+
+```{r}
+m5 = glm(Transported ~ CryoSleep + 
+           RoomService_log,
+        data=train,
+        family="binomial")
+
+coef(m5)
+```
+
+11. Based on the logistic regression above,
+predict the probabilty of being transported for someone who was not in cryosleep and who spent 1000 on room serive.

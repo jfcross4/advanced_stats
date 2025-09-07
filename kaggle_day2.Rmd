@@ -1,0 +1,46 @@
+---
+title: "2024 March Mania - New Rules!"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Update!
+
+The 2024 Competition is now open!  You can see this year's rules and the timeline <a href="https://www.kaggle.com/competitions/march-machine-learning-mania-2024" target="_blank">here</a>
+
+The rules have changed rather drastically from previous years.  Instead of submitting probabilities for every possible game, you are submitting a bracket (or a "portfolio of brackets") with projected winners.  
+
+I believe that this set of rules will:
+
+* Place a bit more emphasis on coding (since your predicted winners in round 3 will depend on your predicted winners in round 2 and so on).
+
+* Place a bit less emphasis on mathematical modeling (since we're just predicting who won and not whether they had a 61% of winning or a 57% chance of winning a top-notch mathematical model is probably less important this year).
+
+* Reward different strategies.  I think the first and possibly most important question to answer is whether you are better off submitting one bracket, several brackets, or many brackets (you are allowed to anywhere from 1 to 100,000 brackets).  Your overall score is the average score for all of the brackets you submit.  Please read the rules so that you understand how this will work.
+
+# Another Twist
+
+A second new twist this year is that instead of just uploading a .csv file with our predictions, we need to submit a *notebook* (with code) that creates the .csv file.  Kaggle lets you make notebooks using either R or python code.  If you have used R markdown files at some point (we used them in Stats last year), these notebook will look a bit familiar.  We will practice writing notebooks together in class and I will make an example notebook and share it with you.
+
+# The Big Picture
+
+The data files contains lots of historical data -- regular season and tournament data for teams from past seasons.  The idea is that you could devise a method of winning this contest and see how well that method would have performed in past years.  This year's data won't be complete until (probably) the Monday before the tournaments begin (since it requires all previous games to have been played and the brackets to be selected).  Your predictions are due on March 21st, just before the tournaments start.  That doesn't leave much time between when all of this year's data is available and when your predictions are due.  Therefore, we should probably write code that would work for a previous year, possibly last year, see that it works and then we will need to make only minor changes to adapt it for this year's competition.
+
+# What can we do right now?
+
+Read through the descriptions of the <a href="https://www.kaggle.com/competitions/march-machine-learning-mania-2024/data" target="_blank">data</a> and try to get a handle on the types of data that are available. Here are some important files to read about:
+
+* MTeams.csv and WTeams.csv
+
+* MNCAATourneySeeds.csv and WNCAATourneySeeds.csv
+
+* MNCAATourneyCompactResults.csv and WNCAATourneyCompactResults.csv
+
+* MNCAATourneySlots and WNCAATourneySlots
+
+If you scroll to the bottom of this page, you will see "Data Explorer" on the right and can click on data files and see samples of the data.
+
+

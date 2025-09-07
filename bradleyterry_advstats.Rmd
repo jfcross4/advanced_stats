@@ -1,0 +1,229 @@
+---
+title: "Basketball Logistic Regression"
+author: "Jared Cross"
+date: "2023-03-07"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, eval=FALSE)
+```
+
+## A Little Statistics History
+
+In the late 1970's Bill James, now a famous baseball writer and historian, was working night shifts a security guard at a pork and beans cannery.  He, much like us, was interested in building a model to predict the probability that one team would beat another team given the relative qualities of the two teams.  
+
+James reasoned that with $p_{a,b}$ defined as the probability that Team A will beat team B,
+$p_a$ as Team A's *true* winning percentage (the probability that they would beat an average team) and, $p_b$ as Team B's *true* winning percentage, the following six statements **must be true**:
+
+1. $p_{a,a} = 0.5$ (note that this rule concerns two teams of equal quality not a team playing itself)
+2. $p_{a,.5} = a$
+3. If $a > b$ then $p_{a,b} > 0.5$ and if $a < b$ then $p_{a,b} < 0.5$
+4. If $b < 0.5$ then $p_{a,b} > a$ and if $b > 0.5$ then $p_{a,b} < a$
+5. $0 \leq p_{a,b} \leq 1$ and if $0 < a < 1$ then $p_{a,0}=1$ and $p_{a,1}=0.$
+6. $p_{a,b} + p_{b,a} = 1$
+
+He realized that no linear combination of team qualities would do the trick and produced and published the following formula, dubbed the "[log5](https://en.wikipedia.org/wiki/Log5)" formula despite the fact that is has no immediately obvious connection to logarithms:
+
+$$p_{a,b} = \frac {p_a - p_a \cdot p_b}{p_a + p_b - 2 \cdot p_a \cdot p_b}$$
+
+It turns out that James had rediscovered a probability model that been created by [R.A. Bradley and M.E Terry in 1952](https://www.encyclopediaofmath.org//index.php?title=Bradley-Terry_model&oldid=22181) who had themselves rediscovered a model published by [Ernst Zermelo in 1929](http://link.springer.com/article/10.1007%2FBF01180541).  
+
+# Log5 is Logistic Regression 
+
+Bill James' formula can be rearranged to give a formula for the *odds* of Team A emerging victorious:
+
+$$\frac{p_{a,b}}{1-p_{a,b}} = \frac {p_a - p_a \cdot p_b}{p_b - p_a \cdot p_b} = \frac {p_a}{1 -  p_a} \cdot \frac {1-p_b}{p_b}$$
+
+or to give the *log odds* of Team A winning:
+
+$$log(\frac{p_{a,b}}{1-p_{a,b}}) = log(\frac {p_a}{1 -  p_a}) - log( \frac {p_b}{1-p_b} )$$
+
+What James had found was that while the probability of Team A beating Team B could not be expressed as a linear combination of team qualities, the *log odds* of Team A's chance of victory could be.  
+
+This suggests that our regression model should predict the **log odds** of the outcome (a win or a loss) rather than the outcome itself.  In the statistics talk, a model that predicts a function of the outcome variable is called a "generalized" linear model and the function that you choose is called the "link function".  The log odds function, $log(\frac{y}{1-y})$, is known as the logistic link and a regression model that uses the logistic link is known as logistic regression.
+
+We can use a logistic regression model to estimate team qualities and use it to predict the results of games.  First, we'll need data!
+
+# Getting the Data
+
+Let's load data that has:
+
+1. Games results linked to team ids
+2. team ids linked to team names (for each of several spellings)
+3. Matchups that *could* have occured in the 2022 NCAA tournaments.
+
+```{r}
+M_season_results = 
+  read.csv("https://raw.githubusercontent.com/jfcross4/advanced_stats/master/stage2data/MRegularSeasonCompactResults.csv")
+
+W_season_results =
+  read.csv("https://raw.githubusercontent.com/jfcross4/advanced_stats/master/stage2data/WRegularSeasonCompactResults.csv")
+
+
+Wteamspellings =
+  read.csv("https://raw.githubusercontent.com/jfcross4/advanced_stats/master/stage2data/WTeamSpellings.csv")
+
+Mteamspellings =
+  read.csv("https://raw.githubusercontent.com/jfcross4/advanced_stats/master/stage2data/MTeamSpellings.csv")
+
+M_tournament_games = 
+  read.csv("https://raw.githubusercontent.com/jfcross4/advanced_stats/master/stage2data/MSampleSubmissionStage2.csv")
+
+W_tournament_games =
+  read.csv("https://raw.githubusercontent.com/jfcross4/advanced_stats/master/stage2data/WSampleSubmissionStage2.csv")
+
+```
+
+Take a look at the data frames you just read in and try to understand what data each data set contains.  In particular, take a look at *Mresults2022* and *Wresults2022*.
+
+I want to transform these data sets so that they look more like our speed dating data.  Our speed dating data actually had two rows for every potential date -- one looking at it from the perspective of each of the two potential daters.  We'll do the same with our basketball game data -- making two rows for each game one from the perspective of each team.  If from the perspective of one of the teams it was a home game, then for the other team's perspective it was an away game.  If the former team won, the later team must have lost.  I also want to pluck out one season's worth of data at a time.  The following function will do the trick:
+
+```{r}
+transform_df = function(df, season){
+  
+  df = df %>% mutate(home = case_when(
+    WLoc == "N" ~ 0,
+    WLoc == "H" ~ 1,
+    WLoc == "A" ~ -1,
+    TRUE ~ 0))
+  
+  sub1 <- df %>% 
+    filter(Season==season) %>% 
+    mutate(team1=as.factor(WTeamID), 
+           team2=as.factor(LTeamID), 
+           outcome=1) %>% 
+    select(team1, team2, home, outcome)
+  
+  sub2 <- df %>% 
+    filter(Season==season) %>% 
+    mutate(team1=as.factor(LTeamID), 
+           team2=as.factor(WTeamID), 
+           home=-1*home, outcome=0) %>% 
+    select(team1, team2, home, outcome)
+  
+  reg.results <- rbind(sub1, sub2)
+  }
+
+```
+
+Let's use this to create new data frames for Women's and Men's college basketball teams for 2022:
+
+```{r}
+library(tidyverse)
+
+Mresults2022 = transform_df(M_season_results, season=2022)
+
+Wresults2022 = transform_df(W_season_results, season=2022)
+```
+
+Now take a look at *Mresults2022* and *Wresults2022*.
+
+Using this data set we **could** simply predict the outcome (whether team1 won) based on the identities of team1 and team2 and home field advantage.  Something like:
+
+glm(outcome ~ home +  team1 + team2, data = Wresults2022, family = binomial) 
+
+This, however, would have the effect of taking every team's observed quality and the observed qualities of their opponents at face value.  In truth, we know that the most successful teams are not quite as good as their results and the least successful not as bad as theirs.  Even if all teams were of equal quality, some teams would have won more games than others.  We can better estimate team strengths by "shrinking" teams' observed qualities towards the mean.  We can do this by using a *mixed effects model* and including team1 and team2 in the model as random effects.
+
+
+```{r, warning=FALSE, message=FALSE}
+library(lme4)
+
+mbt <- glmer(outcome ~ home +  (1 | team1) + (1 | team2), 
+             data = Wresults2022, family = binomial)
+```
+
+Now let's see what the model tells us!
+
+```{r}
+summary(mbt)
+```
+
+The coefficient of "home" is 4.252e-01.  Since this is a logistic regression model to better understand this coefficient we can do:
+
+```r
+exp(4.252e-01)
+```
+This tells us that in Women's college basketball, a team's odds of winning were 1.53 times greater at home than in a neutral arena.
+
+If two even teams played, the home team would win...
+
+```{r}
+ 1.53/( 1.53 + 1)
+```
+
+... 60% of the time?
+
+Our model will also tell us about team qualities:
+
+```{r}
+ranef(mbt)
+```
+
+These coefficients tell us each team's log odds of beating an average team in a neutral arena (neither home nor away).
+
+Let's put these team qualities into a dataframe.
+
+```{r}
+re <- ranef(mbt)$team1
+
+teamquality = data.frame(TeamID =
+                           as.numeric(row.names(re)),
+                         quality=exp(re[,"(Intercept)"]))
+
+
+
+```
+
+Let's match these coefficients up with team names!
+
+```{r}
+Wteams = Wteamspellings %>% 
+  group_by(TeamID) %>%
+  summarize(Team = first(TeamNameSpelling))
+
+W_team_quality = left_join(teamquality,
+          Wteams,
+          by="TeamID")
+```
+
+Now, we can look at the top 10 women's teams of 2022:
+
+```{r}
+W_team_quality %>% 
+  top_n(10, quality) %>%
+  arrange(-quality)
+```
+
+These team qualities represent each team's odds of beating an average team.
+
+Here are the 10 worst teams:
+
+```{r}
+W_team_quality %>% 
+  top_n(10, -quality) %>%
+  arrange(quality)
+```
+
+We can predict any teams chances of beating any other team as follows.  This code calculates South Carolina's chances of beating Stanford.  Notice that this uses the team ids that we found in the "W_team_quality" table.
+
+```{r}
+game.to.predict = data.frame(team1 = 3376, team2=3390, home=0)
+
+predict(mbt, newdata=game.to.predict, type="response")
+
+````
+
+# Challenge:
+
+Repeat this analysis for the Men's basketball teams.
+
+**Question 1:** How often would the home team win an otherwise even matchup in Men's college basketball in 2022?
+
+**Question 2:** According to this analysis what were the three best Men's college basketball teams in 2022?
+
+**Question 3:** According to this an analysis what were Kansas's chances of winning a game against North Carolina?
+
+**Question 4:** In which tournament, the Men's or Women's, do you think the best team in the tournament had the greatest chance of winning?  Why?
+
+**Question 5:** In Women's basketball, our model rated Texas (3400) as better than Florida Gulf Coast University, FGCU (3195) despite the fact that FGCU was 26-2 and Texas was 26-6.  Why do you think it did that?  Is this a feature or a bug?

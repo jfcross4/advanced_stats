@@ -1,0 +1,152 @@
+---
+title: "Constructing Phylogenetic Trees"
+author: "Advanced Statistics"
+output: html_document
+---
+
+# Principal components analysis
+
+**Principal components analysis** is a way of summarizing a larger number of correlated variables by constructing a smaller number of uncorrelated ones.  We'll use a principal components analysis to make phylogenetic trees of species based on their characteristics.  In terms of the "five tribes of machine learning" we talked about where working within the "analogizers" tribe today -- grouping data points into clusters based on their similarity.
+
+## What is a Principle Component? 
+#### Example: An Imaginary Saint Ann's Decathlon
+
+Imagine that all Saint Ann's students competed in a decathlon and we recorded their scores on each of the 10 events.  We want to summarize and better understand this data.  The first thing we might notice about these results is that students who did well in some events were likely to do well in other events as well -- in other words, student result are correlated between some events.  The **first principal component** would capture as much of the student variation as possible and we might call it something along the lines of "general athleticism" .  The second principal component would be something orthogonal (unrelated) to general athleticism that explains why some student did better or worse on some events than their general athleticism would predict.  The second principal component could (for example) be a running/throwing axis with student who did comparatively well or poorly on the discus, javelin and shot put on either end.  A third principal component might be a short/long distance axis to capture which students did relatively better or worse on sprints relative to long distance races.  As a result of this principal component analysis we could summarize each student's results with three meta scores (general athleticism, running v. throwing and short v. long) that might capture much of what the 10 scores would tell us.  If done well, we could capture most of the information from 10 events using only these 3 features.  We could also calculate similarities between students, based on where they are located on our three principal component axes.
+
+# Zoo Dataset
+
+The zoo data set notes the characteristics of 101 animal species.  Take a look at the data and the data summary which notes how many species fall into every category.
+
+```{r, warning=FALSE, results="hide", message=FALSE}
+library(tidyverse)
+library(psych)
+```
+
+```{r, echo=FALSE}
+zoo <- read.csv('https://raw.githubusercontent.com/jfcross4/advanced_stats/master/zoo.csv',header=T)
+```
+
+```{r, eval=FALSE}
+zoo <- read.csv('https://raw.githubusercontent.com/jfcross4/advanced_stats/master/zoo.csv',header=T)
+```
+
+```{r, results="hide", eval=FALSE}
+
+View(zoo)
+
+summary(zoo %>% mutate_all(as.factor))
+```
+
+
+The *class_type* variables (the 18th and final column) denotes the class of the animal in question and using it to determine the similarity between species would be cheating so we'll stick to the first 17 columns.  
+
+The following code calculates the first five principal components (this calculation involves a little matrix algebra that we'll skip past) and plots animals on a graph with their score on the first two principal components.  It also shows how each of the individual variables relates to these two principal components and gives us a sense of how these variables relate to each other.  There's quite a bit of information on this graph so take a close look.
+
+```{r, results="hide", eval=FALSE}
+pc <- principal(zoo %>%
+                  select(-class_type, -animal_name),
+                  nfactor=5,
+                rotate="varimax",
+                scores=T)
+
+biplot(pc$scores[,1:2],pc$loadings[,1:2], cex=0.5, xlabs=zoo[,1])
+```
+
+Notice that *milk* and *eggs* point in opposite directions from each other as do *legs* and *aquatic* and *feathered* and *toothed*.  Meanwhile, *feathers* and *airborne* point in similar directions.  It may come as no surprise that animals with feathers are more likely to fly and that animals with legs are less likely to live in water.  The purpose of principal components analysis is largely to quantify these relationships.  It may also be interesting to note which descriptors are orthogonal to each other, meaning that they appear to be unrelated.  For instance, the teeth and legs arrows are orthogonal to each other in this graph. 
+
+People often use a skree plot to determine how many principal components to use in their analysis.  One rule of thumb is to use all the components with "loadings" of more than 1.  The loadings are a measure of how much of the variation in the data each principal component explains.  
+
+```{r, results="hide", eval=FALSE}
+plot(pc$values, type="b", ylab="Loading",xlab="Principal Component")
+abline(h=1)
+```
+
+In our case, this plot suggests that we use 4 principal components in our analysis.  In the code that follows, we'll imagine plotting the locations of all 101 animals in a 4-dimensional space with one axis determined by each of these 4 principal components.  We'll then measure the distance between every pair of animals in this 4-dimensional space to determine how similar each pair of species is (more similar species pair are closer).  Finally, we'll use those similarities to calculate a family tree.
+
+
+```{r, results="hide", eval=FALSE}
+pc4= principal(zoo %>%
+                  select(-class_type,
+                         -animal_name),
+               nfactor=4,
+               rotate="varimax",
+               scores=T)
+
+dst.4pc <- dist(pc4$scores[,1:4], method = "euclidean") 
+
+fit.4pc <- hclust(dst.4pc, method="ward")
+
+plot(fit.4pc, labels=zoo$animal_name, ylab='distance', cex=0.6, sub="", xlab="", main="Zoo Relatedness Tree")
+
+```
+
+How did we do?  Take a close look at this map and note where our statistical method succeeded and where it failed.  You can imagine the branches in this tree as a timeline telling us how far back we must go to find a common ancestor between two species.
+
+**Challenge:** Maybe four principal components was the wrong choice.  Try repeating this analysis using either 5 or 3 principal components and see how our results compare.
+
+
+# Mammal Teeth
+
+We can also use *principal components analysis* to look for clusters of mammals within the 32 species based on their teeth and to find associations between the numbers of teeth of different types.  
+
+
+```{r, warning=FALSE, results="hide", message=FALSE, echo=FALSE}
+teeth <- read.table('https://raw.githubusercontent.com/jfcross4/advanced_stats/master/teeth2.txt',header=T)
+
+```
+
+```{r, eval=FALSE}
+teeth <- read.table('https://raw.githubusercontent.com/jfcross4/advanced_stats/master/teeth2.txt',header=T)
+```
+
+
+
+The Teeth data set has data on the number of pairs of teeth, broken down into 8 different types of tooth pairs, for 32 species of heterodont mammals (mammals with different tooth morphologies).  Distributions of numbers of pairs by type are shown below.
+
+```{r, results="hide", eval=FALSE}
+View(teeth)
+
+summary(teeth %>% mutate_all(as.factor))
+```
+
+In the summary, you can see number of mammal species (among the 32 in this data set) which each number of top and bottom incisor, top and bottom canines, top and bottom premolars and top and bottom molars.
+
+Since we have less data to work with, we'll try using only two principal components this time.  Here's a graph of how mammals score on our two principal components.
+
+```{r, results="hide", eval=FALSE}
+pc <- principal(teeth %>%
+                  select(-ANIMAL),
+                nfactor=2,
+                rotate="varimax",
+                scores=T)
+
+biplot(pc$scores[,1:2],pc$loadings[,1:2], cex=0.5, xlabs=teeth[,1])
+```
+
+We can see that numbers of top and bottom molars closely track each other and that animals with more molars tend to have fewer top incisors.  Numbers of bottom incisors appears to be unrelated to numbers of molars and numbers of top incisors.  There's a cluster of gnawing mammals that are notable for their number of molars and their lack of bottom incisors.  
+
+Even with species labels shown on the plot, the principal components themselves are somewhat difficult to comprehend.  The first principal component could perhaps be described as the extent to which teeth are located towards the front of the mouth rather than the back.  
+
+**A Tree of Teeth**
+
+Let's once again try to construct a phylogenic tree based on this data.  
+
+```{r, results="hide", eval=FALSE}
+
+dst <- dist(pc$scores[,1:2], method = "euclidean") 
+fit <- hclust(dst, method="ward")
+plot(fit, labels=teeth$ANIMAL, ylab='distance', cex=0.6, sub="", xlab="", main="Mammal Teeth Phlogenic Tree")
+
+
+```
+
+To see how well our model performed you may want to compare it to an actual phylogenic tree:
+
+![Mammals_Phylogenetic_Tree](https://upload.wikimedia.org/wikipedia/commons/f/fa/The_Ancestors_Tale_Mammals_Phylogenetic_Tree_in_mya.png)
+
+You might also have fun playing with [this](https://www.evogeneao.com/en/explore/tree-of-life-explorer).
+
+
+You could also try building a tree using 3 principal components instead of 2.  Does this tree reflect that actual ancestry of mammals more closely or less closely?
+
+

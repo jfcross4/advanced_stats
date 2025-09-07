@@ -1,0 +1,18 @@
+Spaceship Titanic
+------------------------
+
+Ultimately, we will make predictions in the Kaggle [Spaceship Titanic](https://www.kaggle.com/competitions/spaceship-titanic/overview) competition.  For today, however, we're simply going to explore the data while practicing creating and interpreting logistic regression models.
+
+Please write your answers to the questions below on a sheet of paper.
+
+## Data and Packages
+
+```r
+library(tidyverse)
+
+train = 
+  read.csv("https://raw.githubusercontent.com/jfcross4/advanced_stats/master/spaceship-titanic/train.csv")
+
+View(train)
+
+```

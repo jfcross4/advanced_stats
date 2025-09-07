@@ -1,0 +1,120 @@
+---
+title: "A Genetic Algorithm"
+author: "Advanced Statistics"
+output: html_document
+---
+
+# The Backpack Problem (a classic computer science problem)
+
+You are going to spend a month in the wilderness. You’re taking a backpack with you that can carry no more than 20 kilograms. You have a number of survival items available, each with its own number of “survival points”. You’re objective is to pick the items that maximize the number of survival points without exceeding your pack's weight limit.
+
+The following table shows the items you may choose from.
+
+```{r, echo=FALSE}
+library(knitr)
+items <- data.frame(item=c("pocketknife", "beans", "potatoes", "iphone", "sleeping bag", "rope", "compass" ),
+                    survivalpoints =c(10, 20, 15, 2, 30, 10, 30),
+                    weights = c(1, 5, 10, 1, 7, 5, 1))
+kable(items, digits=1, caption="Possible Items")
+
+```
+
+Let's load the packages we need and put these objects into a data.frame in R:
+
+```{r, eval=FALSE}
+library(genalg)
+library(ggplot2)
+
+dataset <- data.frame(item = c("pocketknife", "beans", "potatoes", "iphone", "sleeping bag", "rope","compass"), 
+            survivalpoints = c(10, 20, 15, 2, 30, 10, 30), 
+            weight = c(1, 5, 10, 1, 7, 5, 1))
+
+weightlimit <- 20
+```
+
+# Genetic Algorithms
+
+Genetic algorithms can be used to solve search or optimization problems like this backpack problem.  A potential solution to the backpack problem can be imagined as a chromosome.  The chromesome below is the solution: pocketknife, iphone and sleeping bag.  And the code below calculates the number of surival points for this solution.
+
+```{r, eval=FALSE}
+chromosome = c(1, 0, 0, 1, 1, 0, 0)
+dataset[chromosome == 1, ]
+cat(chromosome %*% dataset$survivalpoints) #calculates survival points
+```
+
+Is this the best solution?  To find out, we'll let our chromosome/solution mutate and then we'll score each of the resulting chromosome/solutions.  The ones that perform the best (have the highest survival scores in this case) will reproduce themselves and then we'll repeat the process.  The diagram below shows this scheme.
+
+![](https://www2.meteo.uni-bonn.de/mitarbeiter/venema/themes/surrogates/constrained/evolutionary_search_scheme_large.png)
+
+
+First, let's write code that evaluates a chromosome.  The function below calculates the number of surival points and the weight.  If the weight is over the limit, the score is 0, otherwise it's the negative of the number of surival points (since lower scores are better).
+
+
+```{r}
+evalFunc <- function(x) {
+    current_solution_survivalpoints <- x %*% dataset$survivalpoints
+    current_solution_weight <- x %*% dataset$weight
+
+    if (current_solution_weight > weightlimit) 
+        return(0) else return(-1*current_solution_survivalpoints)
+}
+```
+
+We can try this out on our current chromosome:
+
+```{r, eval=FALSE}
+evalFunc(chromosome)
+```
+
+Now let's see evolution at work.  Our chromosome will be 7 units long (representing the 7 choices of items).  We'll use a population of 200 chromosomes with a 1% mutation rate (per gene per generation) and we'll simulate 30 generations and let the top scoring 20 chromosomes survive and reproduce in each generation.
+
+
+```{r, eval=FALSE}
+GAmodel <- rbga.bin(size = 7, 
+                    popSize = 200, 
+                    iters = 30, 
+                    mutationChance = 0.01, 
+                    elitism = 20, 
+                    evalFunc = evalFunc)
+
+cat(summary(GAmodel))
+
+plot(GAmodel)
+
+```
+
+The plot shows your the best (black line) and average (blue line) score in each generation and the code above also returns the best scoring chromosome.  Is there a way to do better?  You can try out your own solutions and see if you can best this solution.
+
+```{r, eval=FALSE}
+solution = c(1, 1, 0, 1, 1, 1, 1)
+dataset[solution == 1, ]
+
+cat(paste(solution %*% dataset$survivalpoints, "/", sum(dataset$survivalpoints)))
+```
+
+**What happens if you try a higher mutation rate?  What if you allow more solutions or fewer solution to surive to the next generation?  Try altering the code above to find out.**
+
+
+
+# Picnic
+
+Using a genetic algorithm to find the best combination of items to bring on a picnic.
+
+```{r, echo=FALSE}
+
+items <- data.frame(item=c("antrepellant", "beer", "blanket", "bratwurst", "brownies", "frisbee", "salad", "watermelon" ),
+                    utility =c(2, 9, 3, 8, 10, 6, 4, 10),
+                    weights = c(1, 3, 4, 3, 3, 1, 5,10))
+kable(items, digits=1, caption="Possible Items")
+
+```
+
+**Challenge 1:** Assume a weight limit of 15 pounds.
+
+**Challenge 2:** Instead of using a strict weight limit, assume that every pound under 15 pounds of total weight is worth one extra utility point.  Every additional pound added over 15 pounds costs 2 utility points.  (Hint: you'll need to rewrite our evaluation function.)
+
+# Project Idea:
+
+Write your own code for a genetic algorithm.  Try adding crossovers (remember prophase I of meiosis?).
+
+![Crossing Over](https://pbmo.files.wordpress.com/2013/03/crossover.png)
