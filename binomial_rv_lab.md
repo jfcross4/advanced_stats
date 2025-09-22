@@ -55,26 +55,40 @@ Daryl Bem, a Cornell psychology, professor, tested the ability of students to id
 Did having a sibling or spouse on board make adults more likely to survive on the Titanic?
 
 
-Let's first read in our favorite data set:
+Let's first read in a data set with data on Titanic passengers:
 ```r
 titanic = read.csv("https://raw.githubusercontent.com/jfcross4/advanced_stats/master/titanic_train.csv")
 ```
+And take a look at the data:
 
-Then take a look at the numbers:
+```r
+View(titanic)
+```
+
+The "SibSp" shows the number of same generation family members (siblings and spouses) a passenger had on board.  The code below looks only at adults (Age >= 18), splits passengers into a group that had at least one same generation family member and a group that didn't and looks at how many people were in each group (n), how many in each group survived (NumSurvived) and, lastly, the survival rate for each group:
 
 ```r
 library(dplyr)
 
-titanic %>% filter(Age>=18) %>% group_by(SibSp>=1) %>% summarize(n=n(), NumSurvived = sum(Survived), SurvivalRate=mean(Survived))
+titanic %>% 
+  filter(Age >= 18) %>% 
+  group_by(SibSp >= 1) %>% 
+  summarize(n=n(), 
+            NumSurvived = sum(Survived),
+            SurvivalRate = mean(Survived))
 ```
-Our training set contains 428 adults without a spouse or sibling on board of whom 147 (or 34.3%) survived and 173 adults riding with at least one spouse of sibling or whom 82 (or 47.4%) survived.
+The results show 428 adults without a spouse or sibling on board of whom 147 (or 34.3%) survived and 173 adults riding with at least one spouse of sibling or whom 82 (or 47.4%) survived.
 
 So, at first blush, having a sibling helped!  But, might this be a fluke?  Could we easily see a difference this large just by chance (even if folks with spouses/siblings were no more likely to survive)?
 
 Let's look at the overall numbers:
 
 ```r
-titanic %>% filter(Age>=18) %>% summarize(n=n(), NumSurvived = sum(Survived), SurvivalRate=mean(Survived))
+titanic %>% 
+  filter(Age>=18) %>% 
+  summarize(n=n(), 
+            NumSurvived = sum(Survived),
+            SurvivalRate = mean(Survived))
 ```
 
 There are 601 adult passengers (in this sample) and 229 (or 38.1%) survived.  Let's pretend that both adults with siblings/spouses and folks without had a 38.1% chance of survival, how often would we see a difference between groups as large as the 47.4%-34.3% = 13.1% difference in survival rates?
@@ -97,10 +111,10 @@ hist(sibsp_survival_rate)
 hist(difference_in_survival_rate)
 ```
 
-How often does the SibSp group out survive the "loner" group by the 13.1% we saw in the data (or more)?
+How often does the SibSp group out survive the "loner" group by the 13.1% we saw in the data (or more)?  The code below will calculate the answer:
 
 ```r
-mean(difference_in_survival_rate>0.131)
+mean(difference_in_survival_rate > 0.131)
 ```
 
 Not often!  (You can run more simulations if you want a more precise number)  This is called a one-tailed p-value because it's the chance of getting a result this extreme or more extreme in one direction.  If we want to know how often we'd see a 13.1% survival but one of the two groups we can calculated a two-tailed p-value as:
@@ -109,13 +123,13 @@ Not often!  (You can run more simulations if you want a more precise number)  Th
 mean(abs(difference_in_survival_rate)>0.131)
 ```
 
-**Task 2:** Analyze whether we can be confident that children with a sibling on board had a better chance of survival.  You can modify code used above.  Explain your findings.
+**Task 2:** Analyze whether we can be confident that **children** with a sibling on board had a better chance of survival.  You can modify code used above.  Explain your findings.
 
 
 
 # Was Kobe Bryant Streaky (and thus not just a binomial random variable)?
 
-We'll try to answer this by looking at shots Kobe took during the 2009 NBA Finals.  (I should acknowledge that if we were seriously investigating this question we'd both want to use data from throughout Kobe entire career and attempt to control for the difficulty of the shots Kobe was taking.)
+We'll try to answer this by looking at shots Kobe took during the 2009 NBA Finals.  (I should acknowledge that if we were seriously investigating this question we'd both want to use data from throughout Kobe's entire career and attempt to control for the difficulty of the shots Kobe was taking.)
 
 ```r
 kobe = readRDS(url("https://github.com/jfcross4/advanced_stats/blob/master/kobe_basket.rds?raw=true"))
