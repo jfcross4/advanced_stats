@@ -1,6 +1,12 @@
 04 Random Variables Lab
 -------------------------------------
 
+# Getting Started
+
+* Go to posit.cloud and log in
+* Go our our Advanced Stats Workspace
+* Start a New Project (New RStudio Project).  This will load the package that you need for this lab.
+
 # Rolling the Dice
 
 Let's making a random variable for rolling one die:
@@ -118,7 +124,7 @@ stanns_game = SofIID(stanns, n=70)
 packer_game = SofIID(packer, n=70)
 ```
 
-We can generate random variables for the total points scored in a game and for St. Ann's margin of victory (or loss) as follows.
+We can generate random variables for the *total points scored* in a game and for *St. Ann's margin of victory* (or loss) as follows.
 
 ```r
 total = SofI(stanns_game, packer_game)
@@ -146,4 +152,4 @@ e. Our model of reality (like all models) is imperfect in a number of ways.  Do 
 
 **Question 5:**
 
-In NBA games, teams typically have about 100 possessions a piece and they score, on average, about 1.1 points per possession.  Using random variables, try to estimate the chance that an underdog will win a game in which the favorite is favored (expected to win) by 10 points.  Please describe how you made your estimate. 
+In NBA games, teams typically have about 100 possessions a piece and they score, on average, about 1.1 points per possession.  Using random variables, try to estimate the chance that an underdog will win a game in which the favorite is favored (expected to win) by 10 points.  (Hint: you could create a favorite who averages 1.15 points per possesion an an underdog who average 1.05 points per possession.  You'll have to play around with the "stanns" and "packer" random variables to make this happen). Please describe how you made your estimate. 
