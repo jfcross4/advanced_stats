@@ -1,7 +1,7 @@
 05 Bayes Lab (using binomial random variables)
 -------------------------------------
 
-As you may (possibly) recall, it's possible to take Bayes theorem (which helps us find condition probabilities):
+As you now know, it's possible to take Bayes theorem (which helps us find condition probabilities):
 
 $$ P(A|B) = 
 \frac{P(A)\cdot P(B|A)}{P(A)\cdot P(B|A) + P(\bar{A})\cdot P(B|\bar{A})} $$
@@ -101,7 +101,7 @@ So, there's almost a 56% chance our next toss will be a head.
 
 # 2. Free Throws
 
-Let's imagine high school basketball shooters hit free throws at a 70% clip.  Some players are better than others, of course, and the standard deviation in free throw shooting ability is 10%.  We walk into a high school gym and see a player hit 9 of 10 free throws.  What is the chance that they will hit their next shot?
+Let's imagine high school basketball shooters hit free throws at a 70% clip.  Some players are better than others, of course, and let's imagine that the standard deviation in free throw shooting ability is 10%.  We walk into a high school gym and see a player hit 9 of 10 free throws.  What is the chance that they will hit their next shot?
 
 Once again, we'll start with our prior.  This is what our guess looks like before we see this player shoot and our guess is based only on what we know about high school basketball players in general.
 
@@ -144,7 +144,19 @@ We see that this shooter has a 76.7% chance of making their next free throw whic
 
 # 3. Surely you saw this coming... more ESP
 
-Imagine that someone is agnostic on whether college students have ESP and will be able to predict the locations of images in Bem's study.
+Do you remember Daryl Bem, the Cornell psychology professor, who tested the ability of students to identify which of two curtains hid an erotic image?  Out of 1600 guesses (16 guesses from each of 100 different students), 850 guesses were correct and Bem concluded that this would be rather unlikely to happen by chance and thus students have ESP.
+
+In our previous lab, we showed this with the following:
+
+```r
+sum(dbinom(850:1600, 1600, prob=0.50))
+```
+
+The number you just calculated is a p-value and it is P(at least 850 correct | 0.5 chance of correct).
+
+Now, let's try this with Bayes.
+
+Imagine that going in, someone is agnostic on whether college students have ESP and will be able to predict the locations of images in Bem's study.
 
 In fact, while they believe that there's a 50% chance that students have no ESP, they also think that there's a 50% chance that there *is* some ESP effect but they don't know how big that effect will be.
 

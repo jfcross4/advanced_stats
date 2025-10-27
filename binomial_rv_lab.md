@@ -43,7 +43,7 @@ This (also really small) number is called a p-value.  The (at times dubious) log
 
 # Extrasensory Perception (ESP)
 
-Daryl Bem, a Cornell psychology, professor, tested the ability of students to identify which of two curtains hid an erotic image.  The images were randomly assigned to curtains, so we might expect students to succeed half the time.  And yet, out of 1600 guesses (16 guesses from each of 100 different students), 850 guesses were correct.
+Daryl Bem, a Cornell psychology professor, tested the ability of students to identify which of two curtains hid an erotic image.  The images were randomly assigned to curtains, so we might expect students to succeed half the time.  And yet, out of 1600 guesses (16 guesses from each of 100 different students), 850 guesses were correct.
 
 <a href="https://psycnet.apa.org/buy/2011-01894-001" target="_blank">ESP Article Here</a>
 
