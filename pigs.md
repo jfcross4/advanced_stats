@@ -96,9 +96,11 @@ We'll start by making a new version of this data where all the outcomes (from bl
 
 ```r
 individual_rolls = 
-  rbind(pigs %>% select(height, pig="pink", outcome=pink),
-        pigs %>% select(height, pig="black", outcome=black))
-
+  rbind(pigs %>% mutate(pig="pink") %>% 
+          select(height, pig, outcome=pink),
+        pigs %>% mutate(pig="black") %>% 
+          select(height, pig, outcome=black))
+          
 individual_rolls %>%
   count(outcome)
 ```
