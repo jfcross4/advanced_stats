@@ -80,7 +80,13 @@ ff %>% filter(projected_pts > 0) %>%
   facet_wrap(~position)
 ```
 
-Next, let's make the information in the "game_outcome" column more useful.  Right now these a game_outcome column might be "W 25-20" indicating that the player's team won 25 to 20.  Let's split this information into three columns:
+Next, let's make the information in the "game_outcome" column 
+more useful.  
+
+Right now these a game_outcome column might be "W 25-20" 
+indicating that the player's team won 25 to 20.  
+Let's split this information into three columns, 
+first splitting at the space (" ") and then splitting at the dash ("-").
 
 ```r
 ff = 
@@ -112,6 +118,16 @@ ff %>% filter(projected_pts > 0) %>%
     facet_wrap(~position)
 ```
 
+or this one:
+
+```r
+ff %>% filter(projected_pts > 0) %>%
+  ggplot(aes(projected_pts, pts_over_exp, 
+             color=as.factor(total_td)))+
+  geom_smooth()+
+  facet_wrap(~position)
+```
+
 ## Analysis
 
 
@@ -125,7 +141,7 @@ ff %>% filter(projected_pts >= 10) %>%
             over_exp = mean(pts_over_exp))
 ```
 
-Did some positions go better relative to expectations than others?
+Did some positions do better relative to expectations than others?
 
 ```r
 ff %>% filter(projected_pts >= 10) %>%
@@ -136,7 +152,13 @@ ff %>% filter(projected_pts >= 10) %>%
 
 ```
 
-Are some positions, more predictable than others?  To find out I'll look at the correlation between actual points and projected points.  I'll try this both when limited the analysis to fantasy relevant players and when not limiting the analysis.  (Does that change the results?  If so, why?)
+Are some positions, more predictable than others?  
+To find out I'll look at the correlation between 
+actual points and projected points.  
+
+I'll try this both when limited the analysis to 
+fantasy relevant players (projected points > 10) and when not limiting the analysis.  
+(Does that change the results?  If so, why?)
 
 ```r
 ff %>% filter(projected_pts >= 10) %>%
@@ -152,14 +174,24 @@ ff %>% filter(projected_pts > 0) %>%
 
 ## Wide Data
 
-The data we have been looking at so far is *long*.  It has one row for every player week.  What if we wanted to have one row for every players and columns for each week?  We could "pivot" the data and make it wide instead of long.  Let's do this!  We'll give the data set a new name (so that we don't write over all the good work we've done) and only keep the "pts_over_exp" data to keep things simple:
+The data we have been looking at so far is *long*.  
+By "long", we mean that it has many rows -- every player-game is a row.
+
+What if we wanted to have one row for every 
+player and columns for each week?  
+This would make the data "wider" (more columns) but not as long (fewer rows).
+
+We could "pivot" the data and make it wider.  
+Let's do this!  We'll give the data set a new name 
+(so that we don't write over all the good work we've done) 
+and only keep the "pts_over_exp" data to keep things simple:
 
 ```r
 ff_wide = 
 ff %>%
-  select(player, week, pts_over_exp) %>%
+  select(player, position, week, pts_over_exp) %>%
   arrange(week) %>%
-  pivot_wider(id_cols = player, 
+  pivot_wider(id_cols = c(player, position), 
               names_from = week,
               values_from = pts_over_exp,
               names_prefix = "week")
@@ -171,7 +203,8 @@ View(ff_wide)
 Data in this format might be useful for some types of analysis.  For instance, are players who are over/under projected in week 15 likely to be over/under projected in week 16?  I could use this data to try to find out:
 
 ```r
-ff_wide %>%
+ff_wide %>% 
+  group_by(position) %>%
   summarize(cor(week15, week16, use="pairwise.complete"))
 ```
 
@@ -179,7 +212,40 @@ Or, I could plot "pts_over_exp" on consecutive weeks:
 
 ```r
 ff_wide %>%
-  ggplot(aes(week15, week16)) + 
+  ggplot(aes(week15, week16, color=position)) + 
+  geom_point() +
+  geom_smooth(method="lm")+
+  ggtitle("points over expected")
+
+```
+
+Do players who outperformed expectations in week 15 
+tend to outperform in week 16?
+
+We could also look at performance relative to expectations in all pairs of consecutive weeks
+by rearranging the data in yet a different way:
+
+```r
+ff_consec_weeks = 
+left_join(ff %>% select(player, position, week, pts_over_exp), 
+          ff %>% select(player, week, pts_over_exp) 
+          %>% mutate(prev_week = week - 1),
+          by=c("player", "week"="prev_week"))
+          
+View(ff_consec_weeks)
+```
+
+and look for correlations in and plot this data:
+
+```r
+ff_consec_weeks %>% 
+  group_by(position) %>%
+  summarize(cor(pts_over_exp.x, pts_over_exp.y, use="pairwise.complete"))
+
+
+
+ff_consec_weeks %>%
+  ggplot(aes(pts_over_exp.x, pts_over_exp.y, color=position)) + 
   geom_point() +
   geom_smooth(method="lm")+
   ggtitle("points over expected")
@@ -188,4 +254,5 @@ ff_wide %>%
 
 # Play Around
 
-See what you discover using either the original data "ff" or this wide version "ff_wide"
+See what you discover using either the original data "ff" 
+or this wide version "ff_wide"
