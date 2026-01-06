@@ -96,7 +96,7 @@ and we can make a histogram of the simulation results:
 hist(simulated_alex_values)
 ```
 
-What proportion of our simulated Alex values are at least 32 (the actual value)?
+What proportion of our simulated Alex values are at least 6.7 (the actual value)?
 
 ```r
 mean(simulated_alex_values >= alex)
