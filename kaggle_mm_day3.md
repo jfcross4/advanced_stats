@@ -1,4 +1,4 @@
-Kaggle March Madness Day 2
+Kaggle March Madness Day 3
 ------------------------------------------------
 
 First, complete Kaggle March Madness Day 2 (our previous lab) if you haven't already.
