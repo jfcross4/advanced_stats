@@ -12,7 +12,7 @@ First, complete Kaggle March Madness Day 2 (our previous lab) if you haven't alr
 Remember that you should save your code from this project in an Rscript file so that you can easily find it and run it again when you need to.
 
 ```r
-MTourneyResults = read.csv("MNCAATourneyCompactResults.csv")
+TourneyResults = read.csv("MNCAATourneyCompactResults.csv")
 mordinals = read.csv("MMasseyOrdinals.csv")
 kenpom = read.csv("KenPom.csv")
 ```
