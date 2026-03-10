@@ -1,7 +1,7 @@
 Kaggle March Madness Day 4
 ------------------------------------------------
 
-If you missed previous labs, please complete the earlier Kaggle March Madness labs before working on this lab.
+If you missed previous Kaggle March Mania labs ([1](https://github.com/jfcross4/advanced_stats/blob/cross/kaggle_mm_day1.md),[2](https://github.com/jfcross4/advanced_stats/blob/cross/kaggle_mm_day2.md),[3](https://github.com/jfcross4/advanced_stats/blob/cross/kaggle_mm_day3.md)), please complete the earlier Kaggle March Madness labs before working on this lab.
 
 
 In our last lab, we found that TeamRankings.com has had the most accurate team rankings (of the systems we looked at) over the last decade.  In this lab, we'll used TeamRankings.com's ratings from this year to make predictions.  You may decide that you want to use a different system and, if you do, these steps will still (mostly) work with whichever ratings you want to use.
@@ -10,275 +10,226 @@ In our last lab, we found that TeamRankings.com has had the most accurate team r
 
 We want to get TeamRankings ratings into a .csv file so that we can read them into an R dataframe.
 
-You can start by going to the [TeamRankings website](https://www.teamrankings.com/ncaa-basketball/ranking/predictive-by-other/).  Next highlight the full table including the headers but try not to highlight anything else.
+1. You can start by going to the [TeamRankings website](https://www.teamrankings.com/ncaa-basketball/ranking/predictive-by-other/).  Next highlight the full table including the headers but try not to highlight anything else.
 
-![](teamrankings_highlight.png){#id .class width=50% height=50%}
+![](teamrankings_highlight.png){width=250 height=200}
 
+2. Now paste this data into Google Sheets.  Change the name of your Google Sheets file to "TeamRankings" and then go to File/Download and select "Comma Separated Values (.csv)".  You now have this data as a .csv file.
 
+3. Open the March Madness project on posit.cloud that you created in the previous lab.  You will need one of the files that you imported in a previous lab for this lab.  
 
-Open the March Madness project on posit.cloud that you created in the previous lab.  You will need one of the files that you imported in a previous lab for this lab.
+4. Upload the TeamRankings .csv file you just created into your posit.cloud March Madness project.
 
-
-
-3. Reading these files into R data frames.
+5. Reading this files into an R data frame.
 
 Remember that you should save your code from this project in an Rscript file so that you can easily find it and run it again when you need to.
 
 ```r
-TourneyResults = read.csv("MNCAATourneyCompactResults.csv")
-mordinals = read.csv("MMasseyOrdinals.csv")
-kenpom = read.csv("KenPom.csv")
+# Check the name of your .csv file and change this code as needed:
+TR = read.csv("TeamRankings - Sheet1.csv")
 ```
 
-# What are we up to today?
-
-The purpose of today's lab is to find out which of several public prognosticators is the best at ranking basketball teams.  This will be useful information if we intend to use public rankings to make our Kaggle predictions.
-
-To get a sense of how we're going to do that, let's look at the ordinals file:
+Keeping only the columns we need and looking at the data:
 
 ```r
-View(mordinals)
+TR = TR[, 2:3]
+View(TR)
 ```
 
-The file contains men's college basketball team rankings from 196 sources throughout the last 24 basketball seasons.  The file comes directly from Kaggle which provides the following description of the data:
+# Matching Names with IDs
 
-# MMasseyOrdinals.csv
+In order to use these ratings to make predictions, we'll need to match these team names up with Kaggle's team IDs.  This will take a little bit of work for two reasons:
 
-This file lists ordinal rankings (e.g. #1, #2, #3, ..., #N) of men's teams going back to the 2003 season, under a large number of different ranking system methodologies. The information was gathered by Kenneth Massey and provided on his [rankings page](https://masseyratings.com/cb/arch/compare2023-19.htm).
+1. The "Team" column currently hold more than just team names including team records in parentheses.
 
-**Season** - this is the year of the associated entry in MSeasons.csv (the year in which the final tournament occurs)
+2. Some team names may be written in ways that our Kaggle file doesn't recognize.  For instance, TeamRankings lists the Univsersity of South Florida as "S Florida" and Kaggle team name spellings file contains only "south florida" and "south-florida".  
 
-**RankingDayNum** - this integer always ranges from 0 to 133, and is expressed in the same terms as a game's DayNum (where DayZero is found in the MSeasons.csv file). The RankingDayNum is intended to tell you the first day that it is appropriate to use the rankings for predicting games. For example, if RankingDayNum is 110, then the rankings ought to be based upon game outcomes up through DayNum=109, and so you can use the rankings to make predictions of games on DayNum=110 or later. The final pre-tournament rankings each year have a RankingDayNum of 133, and can thus be used to make predictions of the games from the NCAA® tournament, which generally start on DayNum=134 (the Tuesday after Selection Sunday).
-
-**SystemName** - this is the (usually) 3-letter abbreviation for each distinct ranking system. These systems may evolve from year to year, but as a general rule they retain their meaning across the years. Near the top of the Massey rankings page (linked to above), you can find slightly longer labels describing each system, along with links to the underlying pages where the latest rankings are provided (and sometimes the calculation is described).
-
-**TeamID** - this is the ID of the team being ranked, as described in MTeams.csv.
-
-**OrdinalRank** - this is the overall ranking of the team in the underlying system. Most systems from recent seasons provide a complete ranking from #1 through #351, but more recently they go higher because additional teams were added to Division I in recent years.
-
----------------
-
-We don't want to try to analyze all rankings from all days (this file has almost 6 million rankings!) so instead, let's look at the last rankings (prior to the tournament) from the 25 systems (out of 196) which have put our late seaseon rankings in each of the last 10 seasons (excluding 2020):
+First, let's clean up the team name column:
 
 ```r
-library(tidyverse)
+# removing all characters other than letters, spaces, periods, ampersands and apostrophes:
+TR = 
+TR %>%
+  mutate(Team = gsub("[^a-zA-Z\\ \\' \\&\\.]", "",Team))
 
-systems = c("7OT", "BBT", "BIH", "BWE", "COL", 
-                 "DCI", "DII", "DOK", "DOL", "DUN", "EBP", "KPK", "LMC", "LOG", 
-                 "MAS", "MOR", "PGH", "POM", "REW", "RT", "SPR", "TRK", "TRP", 
-                 "WIL", "WLK")
-  
-mordinals = 
-mordinals %>% 
-  group_by(SystemName, Season) %>% 
-  slice_max(RankingDayNum, n=1) %>% 
-  filter(Season >=2015, Season <=2025, Season !=2020, RankingDayNum >=120) %>% 
-  filter(SystemName %in% systems)
-  
-View(mordinals)
+# trimming away extra spaces
+TR = 
+  TR %>%
+  mutate(Team = gsub("\\s+", " ",Team))
+
+TR = 
+  TR %>%
+  mutate(Team = trimws(Team))
+
+# coverting all letters to lowercase
+TR = 
+  TR %>%
+  mutate(Team = tolower(Team))
+
+
+View(TR)
 ```
+# Trying to Match the Names
 
-Now we're down to 25 systems over 10 seasons and a more modest 89,000 rankings.
+Now, let's see how many names we've matched successfully and how many we've missed:
 
-Ultimately, we want to take the rankings from each of these systems, use the to project the results of each of the last 5 tournaments and see whose rankings made the best predictions... but here's the tricky part, how do we make predictions from rankings?  For instance, if the #10 team in the country plays the #26 team in the country, what is each team's chance of victory?  To answer this question, let's first work on turning rankigns into ratings.  To do this we'll use the KenPom data that has both rankings and ratings:
+First read in the MTeamSpellings file:
 
 ```r
-View(kenpom)
+MTeamSpellings = read.csv("MTeamSpellings.csv")
 ```
 
-In this data set the two columns that matter to use are "RankAdjEM", the ordinal ranking and "AdjEM" the rating.  Let's take those two columns and graph them:
+Now, let's see how many names are matched successfully and how many are not:
 
 ```r
-kp = kenpom %>% 
-  filter(Season >=2015, Season <=2025, Season !=2020) %>%
-    select(OrdinalRank = RankAdjEM, Rating=AdjEM)
+TRmatched = inner_join(TR, 
+                    MTeamSpellings,
+                    by=c("Team"="TeamNameSpelling"))
+nrow(TRmatched)
 
-kp %>% 
-  ggplot(aes(OrdinalRank, Rating)) + 
-  geom_point(size=0.5)
+TRunmatched = anti_join(TR, 
+                    MTeamSpellings,
+                    by=c("Team"="TeamNameSpelling"))
+nrow(TRunmatched)
+
 ```
+We've successfully matched 321 teams with ratings but the names didn't match up for the other 44 teams.  We need to do better!
 
-You can see that a #11 ranked team likely has a considerable lower rating than the #1 ranked team, whereas the difference between the 100th and 110th best teams likely to be consierably smaller.  Let's fit a smooth curve to fit this data and then make a new plot showing what KenPom rating we'd predict for every possible ordinal ranking:
+This simple involved looking at the 44 teams that didn't match:
 
 ```r
-m = loess(Rating ~ OrdinalRank, data=kp, span=0.05)
-kp$predRating = predict(m)
-
-kp %>% 
-  ggplot(aes(OrdinalRank, Rating)) + 
-  geom_point(size=0.5)+
-  geom_point(aes(OrdinalRank, predRating), col="red", size=0.1)
+View(TRunmatched)
 ```
-The red points show the predicted ratings for every possible ranking.  We can now use this relationship to turn all of the rankings (from all of the systems) into predicted ratings:
+
+and then, for each team that didn't match, finding their ID in MTeamSpellings.
+
+Then we can make a data frame with these new spelling/ID combinations:
 
 ```r
-mordinals$Rating = predict(m, newdata=mordinals)
+M_new_spellings = 
+  data.frame(
+    TeamNameSpelling = c("miami",
+                         "s florida",
+                         "n iowa",
+                         "st thomas",
+                         "illinois chicago",
+                         "e tennessee st",
+                         "n texas",
+                         "ucsd",
+                         "kennesaw st",
+                         "kent st",
+                         "ut rio grande",
+                         "loyola mymt",
+                         "middle tenn"), 
+    TeamID = c(1274,
+               1378,
+               1320,
+               1472,
+               1227,
+               1190,
+               1317,
+               1471,
+               1244,
+               1245,
+               1410,
+               1258,
+               1292))
+
 ```
-
-Lastly, we need a way to turn ratings into predicted probabilities.
-
-After some fiddling, I found the the following system works:
-
-* Calculate the difference in ratings.
-* Divide by 14 (a standard error in the prediction) to get a t-score
-* Turn this into a probability by using the t-distribution with 2 degrees of freedom
-
-After determining the probability of victory that our system and Massey's rankings would have assigned to each of the winning teams over the last 10 years, we can calculate our Brier Score by averaging the squared differences between our predictions and the result.
-
-Let's see how this work for Massey Rankings (MAS):
+and add these combinations to the larger list:
 
 ```r
-test.system = "MAS"
-
-mordinals_subset = 
-mordinals %>% 
-filter(SystemName==test.system)
-
-# getting tournament results for the last 10 seasons
-
-TourneyResults = 
-TourneyResults %>% 
-filter(Season >=2015, Season <=2025, Season !=2020)
-
-# matching tournament results with Massey ratings
-
-tourney_with_ratings = 
-left_join(TourneyResults,
-          mordinals_subset %>%
-            ungroup() %>%
-            select(Season, TeamID, WRating = Rating),
-          by=c("Season", "WTeamID"="TeamID")) %>%
-left_join(., 
-          mordinals_subset %>%
-            ungroup() %>%
-            select(Season, TeamID, LRating = Rating),
-          by=c("Season", "LTeamID"="TeamID"))
-
-
-# calculating a Brier Score
-
-tourney_with_ratings %>%
-  mutate(tscore = (WRating-LRating)/14,
-         pred = pt(tscore, df=2)) %>%
-  summarize(brier_score = mean((1-pred)^2))
-
+MTeamSpellings2 = 
+  rbind(MTeamSpellings, M_new_spellings)
 ```
 
-Great!  This system would have achieved a Brier Score of 0.1903.  Can any of the other rankings do better?  Let's use a for loop to calculate the Brier Score for each of these 25 systems.  First, I'll create an empty data frame in which to store our results:
+and then we can try to match names again:
 
 ```r
-results = data.frame(System = systems, 
-                     brier.score = NA)
-                     
-for(i in 1:length(systems)){
-  test.system = systems[i]
-  
-  mordinals_subset = mordinals %>% 
-    filter(SystemName==test.system)
-  
-  
-  tourney_with_ratings = 
-    left_join(TourneyResults,
-              mordinals_subset %>%
-                ungroup() %>%
-                select(Season, TeamID, WRating = Rating),
-              by=c("Season", "WTeamID"="TeamID")) %>%
-    left_join(., 
-              mordinals_subset %>%
-                ungroup() %>%
-                select(Season, TeamID, LRating = Rating),
-              by=c("Season", "LTeamID"="TeamID"))
-  
-  
-  score = 
-    tourney_with_ratings %>%
-    mutate(tscore = (WRating-LRating)/14,
-           pred = pt(tscore, df=2)) %>%
-    summarize(brier_score = mean((1-pred)^2)) %>%
-    as.numeric()
-  
-  
-  results = 
-    results %>%
-    mutate(brier.score = 
-             ifelse(System==test.system, score, brier.score))
-}                     
+TRmatched = inner_join(TR, 
+                    MTeamSpellings2,
+                    by=c("Team"="TeamNameSpelling"))
+nrow(TRmatched)
 
-View(results)
+TRunmatched = anti_join(TR, 
+                    MTeamSpellings2,
+                    by=c("Team"="TeamNameSpelling"))
+nrow(TRunmatched)
 ```
 
-The top scoring system is TRP ([TeamRankings](https://www.teamrankings.com/ncaa-basketball/ranking/predictive-by-other/)), followed by WLK ([Whitlock](http://whitlockrankings.com/fbrank1.htm)), DOK ([Dokter Entropy](http://www.dokterentropy.com/r2026.CBB)), EBP ([ESPN BPI](https://www.espn.com/mens-college-basketball/bpi)) and POM ([Ken Pomeroy](https://kenpom.com/)).
-
-Let's make a graph of the Brier Scores:
+We've gone from 44 unmatched to only 31 (of 365) unmatched and the better news is that we've added the spellings for all the *good* unmatched teams that might make the tournament and predictions for teams that won't make the tournament don't matter.  So, we can probably safely stop here.  Let's make a table that has the TeamRankings ratings the the Kaggle team IDs:
 
 ```r
-results %>%
-    arrange(brier.score) %>%
-    mutate(System = factor(System, levels = System),
-           highlight = row_number() <= 9) %>%
-    ggplot(aes(x = System, y = brier.score, color = highlight)) +
-    geom_point(size = 2.5) +
-    theme_minimal() +
-    labs(title = "System Scores", x = NULL, y = "Score")+
-    scale_color_manual(values = c("black", "red")) +
-    theme_minimal() +
-    guides(color = "none")+ coord_flip()
+TR_with_ids = inner_join(TR, 
+                    MTeamSpellings2,
+                    by=c("Team"="TeamNameSpelling"))
+                    
+View(TR_with_ids)
 ```
 
-I highlighted the best 9 Brier Scores in red since these system stand out from the rest to some degree.
+Every team with a rating above 0 (roughly the top 160 teams in the country) have been matched.
 
-Let's make a composite of the best 9 systems by averaging the ratings of these 9 system for every basketball team in each of the 10 most recent seasons:
+# Combining Ratings
+
+We only have TeamRankings for Men's teams, so we'll use the Massey ratings for Women's teams.  You should have a data.frame called "massey" that you created in a [previous lab](https://github.com/jfcross4/advanced_stats/blob/cross/kaggle_mm_day2.md).
 
 ```r
-best.systems = c("TRP", "WLK", "DOK", "EBP", "POM", 
-                 "LMC", "LOG", "MOR", "TRK")
-mordinals_best = 
-  mordinals %>% filter(SystemName %in% best.systems)
-
-mordinals_best_mean = 
-mordinals_best %>%
-  group_by(Season, TeamID) %>%
-  summarize(Rating=mean(Rating))
+combined_ratings = 
+rbind(massey %>% 
+        filter(TeamID >= 3000),
+      TR_with_ids %>%
+      select(TeamID, Rating)
+        )
 ```
 
-Next, let's use these average ratings to make predictions:
+We can still alter ratings (like you did in the second Kaggle lab) in order to make some gambles.  Replace the code below with the ratings alterations that you want to make (or skip this entirely if you'd rather avoid gambles):
 
 ```r
-tourney_with_ratings = 
-  left_join(TourneyResults,
-            mordinals_best_mean %>%
-              ungroup() %>%
-              select(Season, TeamID, WRating = Rating),
-            by=c("Season", "WTeamID"="TeamID")) %>%
-  left_join(., 
-            mordinals_best_mean %>%
-              ungroup() %>%
-              select(Season, TeamID, LRating = Rating),
-            by=c("Season", "LTeamID"="TeamID"))
-
-  tourney_with_ratings %>%
-  mutate(tscore = (WRating-LRating)/14,
-         pred = pt(tscore, df=2)) %>%
-  summarize(brier_score = mean((1-pred)^2)) %>%
-  as.numeric()
+combined_ratings = 
+  combined_ratings %>%
+  mutate(
+    Rating = case_when(
+    TeamID == 1181 ~ 35,
+    TeamID == 3376 ~ 90,
+    .default = Rating
+    )
+  )
 
 ```
-
-This score based on the average of the 9 best system is betting than any one system on it's own!  Better yet, the prediction based on the average of 9 systems has a bit less noise than the prediction of one system so we can use a smaller standard error.  Let's try 12 instead of 14.
+Lastly, we can run the rest of the code from our [week 2 lab](https://github.com/jfcross4/advanced_stats/blob/cross/kaggle_mm_day2.md) (except using combined ratings instead of massey) to create a .csv file that we can submit to Kaggle.
 
 ```r
-tourney_with_ratings %>%
-  mutate(tscore = (WRating-LRating)/12,
-         pred = pt(tscore, df=2)) %>%
-  summarize(brier_score = mean((1-pred)^2)) %>%
-  as.numeric()
+games_with_ratings = 
+  join_games_and_ratings(games, combined_ratings)
 ```
 
-This improves our predictions further!
+... but since we didn't match all of the team names there are (bad) teams without a rating.  Again, the ratings for these teams shouldn't matter since they won't make the tournament.  However, we still need to rate them and make predictions for them.  I'll replace all NA ratings with a rating of 0.
 
-The take home: The best predictions might come from, [finding the best systems and averaging them](https://fivethirtyeight.com/features/how-our-march-madness-predictions-work/).
+```r
+games_with_ratings = 
+games_with_ratings %>%
+  mutate(
+    team1rating = ifelse(is.na(team1rating), 0, team1rating),
+    team2rating = ifelse(is.na(team2rating), 0, team2rating))
+```
 
+Now, finally, we can finish up with the code from our day 2 lab:
 
+```r
+games_with_predictions = 
+  add_massey_preds(games_with_ratings)
 
+write.csv(unite(games_with_predictions, 
+                  col="ID", 
+                  Season, team1, team2) %>%
+            select(ID, Pred), 
+          file="TR_and_massey_kaggle_predictions.csv",
+          row.names = FALSE)
+```
 
+Further notes:
+
+* You'll want to update any ratings (like Massey or TeamRankings) you plan to use after this coming weekend.
+
+* Think carefully about how you want to differentiate your predictions.
 
