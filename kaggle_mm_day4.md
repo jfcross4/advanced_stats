@@ -12,7 +12,7 @@ We want to get TeamRankings ratings into a .csv file so that we can read them in
 
 1. You can start by going to the [TeamRankings website](https://www.teamrankings.com/ncaa-basketball/ranking/predictive-by-other/).  Next highlight the full table including the headers but try not to highlight anything else.
 
-![](teamrankings_highlight.png){width=250 height=200}
+<img src="teamrankings_highlight.png" width="250" height="200" />
 
 2. Now paste this data into Google Sheets.  Change the name of your Google Sheets file to "TeamRankings" and then go to File/Download and select "Comma Separated Values (.csv)".  You now have this data as a .csv file.
 
