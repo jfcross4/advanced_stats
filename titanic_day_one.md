@@ -23,7 +23,7 @@ Here's an explanation of the data:
 Let's load one of our favorite packages...
 
 ```r
-library(dplyr)
+library(tidyverse)
 ```
 ... and add a couple of functions for evaluating predictions which we used when analyzing box office gross predictions.
 
